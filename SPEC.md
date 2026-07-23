@@ -1,16 +1,16 @@
-# tell-em — spec v0.1 (2026-07-22)
+# teLLeM — spec v0.1 (2026-07-22)
 
 An open-source Rust toolkit for AI-text forensics with receipts. Three verbs,
 one engine, one philosophy: every finding cites the rule or signature that
 fired, confidence is stated honestly, and below threshold it refuses to guess.
 
 ```
-tell-em lint   <text>   # find AI tells, cite each one
-tell-em fix    <text>   # rewrite the tells away (the de-AI pass)
-tell-em who    <text>   # attribute: which model family (and maybe version) wrote this
+teLLeM lint   <text>   # find AI tells, cite each one
+teLLeM fix    <text>   # rewrite the tells away (the de-AI pass)
+teLLeM who    <text>   # attribute: which model family (and maybe version) wrote this
 ```
 
-Public repo: github.com/ajd3v/tell-em (MIT). The engine, base rule pack, and
+Public repo: github.com/ajd3v/teLLeM (MIT). The engine, base rule pack, and
 harvest/eval tooling are public. Calibrated rule packs and fingerprint
 catalogs built from private harvesting stay private ("secret sauce" = config,
 not code).
@@ -18,7 +18,7 @@ not code).
 ## Why this exists
 
 Binary human-vs-AI detectors are oracles with unusable false-positive rates,
-and every one of them hides its reasoning. tell-em takes the opposite bet:
+and every one of them hides its reasoning. teLLeM takes the opposite bet:
 explainable, closed-set, evidence-cited findings. It never says "87% AI."
 It says "12 tells fired: em-dash density 4.1/kwords (rule T001), 'delve' x2
 (T014), uniform bullet openers 9/9 (S003)" or "closest known signature:
@@ -69,7 +69,7 @@ Input: text (file, stdin, or library call). Output: findings with spans.
 The ambitious part. Closed-set model-family attribution from learned
 fingerprints, honest about its limits.
 
-### 3a. Harvester (`tell-em harvest`)
+### 3a. Harvester (`teLLeM harvest`)
 
 - Config lists accessible models (OpenAI, Anthropic, Google, xAI, Meta,
   DeepSeek, Qwen, Mistral, local llama.cpp/Ollama; anything with an
@@ -83,7 +83,7 @@ fingerprints, honest about its limits.
   Corpora from private keys stay private; the harvester itself is public so
   anyone can build their own.
 
-### 3b. Tell miner (`tell-em mine`)
+### 3b. Tell miner (`teLLeM mine`)
 
 - For each model corpus vs a reference baseline (human corpora: pre-2022
   books/wiki/news slices + the other models pooled):
@@ -100,7 +100,7 @@ fingerprints, honest about its limits.
   browsable atlas of model tells that stays useful even when the classifier
   abstains.
 
-### 3c. Attributor (`tell-em who`)
+### 3c. Attributor (`teLLeM who`)
 
 - Scoring: log-likelihood ratio of the text under each fingerprint (naive
   Bayes over the mined features, exactly because naive Bayes is explainable:
@@ -113,7 +113,7 @@ fingerprints, honest about its limits.
   - trained-set disclosure: "among the 14 models in this catalog" printed on
     every result. Out-of-catalog text gets "no catalog match", never a forced
     pick.
-- Eval (`tell-em eval`): held-out self-test per corpus, published confusion
+- Eval (`teLLeM eval`): held-out self-test per corpus, published confusion
   matrix in the README, re-run in CI on catalog changes. Accuracy claims in
   the README come from this harness or don't get made. Known hard cases
   documented: short texts, heavy human editing, RLHF convergence between
