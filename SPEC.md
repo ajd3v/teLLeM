@@ -33,16 +33,16 @@ publishing.
 Input: text (file, stdin, or library call). Output: findings with spans.
 
 - Rule types:
- - **Lexical tells** (T-rules): tell-words and inflections (delve, showcase,
+  - **Lexical tells** (T-rules): tell-words and inflections (delve, showcase,
  leverage, meticulous, pivotal, testament, tapestry...), em/en dash usage,
  curly-vs-straight quote patterns, "not X, but Y" constructions.
- - **Phrase tells** (P-rules): cliches ("it's worth noting", "in today's
+  - **Phrase tells** (P-rules): cliches ("it's worth noting", "in today's
  fast-paced world", "shed light on", "at its core"...).
- - **Structural tells** (S-rules): uniform bullet openers, uniform sentence
+  - **Structural tells** (S-rules): uniform bullet openers, uniform sentence
  length (low variance), triadic-list overuse ("X, Y, and Z" density),
  paragraph-length uniformity, heading-case perfection, emoji-header
  patterns, bolded-lead-in bullet uniformity.
- - **Density scoring**: individual tells are weak, clustering is the signal.
+  - **Density scoring**: individual tells are weak, clustering is the signal.
  Score = weighted tells per kiloword, reported per rule with spans. Output
  bands: clean / seasoned / heavy, never a human-vs-AI verdict.
 - Every rule has: id, name, description, examples, default weight, and a
@@ -91,12 +91,12 @@ fingerprints, honest about its limits.
 
 - For each model corpus vs a reference baseline (human corpora: pre-2022
  books/wiki/news slices + the other models pooled):
- - token/lemma frequency deltas (log-odds with informative Dirichlet prior,
+  - token/lemma frequency deltas (log-odds with informative Dirichlet prior,
  the standard corpus-linguistics move),
- - distinctive n-grams and phrase templates,
- - structural stats (sentence-length distribution, punctuation profile,
+  - distinctive n-grams and phrase templates,
+  - structural stats (sentence-length distribution, punctuation profile,
  list/heading habits, em-dash rate, contraction rate),
- - burstiness/perplexity-free stylometrics only, no logits required, so it
+  - burstiness/perplexity-free stylometrics only, no logits required, so it
  works on closed APIs.
 - Output: a **fingerprint** per model: `catalog/<provider>/<model>.toml`,
  human-readable, diffable, versioned, each entry carrying its evidence
@@ -110,14 +110,14 @@ fingerprints, honest about its limits.
  Bayes over the mined features, exactly because naive Bayes is explainable:
  every feature's contribution is printable).
 - Output contract (the thesis, enforced):
- - ranked candidates with per-feature receipts ("'moreover' rate matches
+  - ranked candidates with per-feature receipts ("'moreover' rate matches
  Gemini 3 profile at 8x baseline..."),
- - calls a FAMILY only above a margin threshold, calls a VERSION only above
+  - calls a FAMILY only above a margin threshold, calls a VERSION only above
  a stricter one, otherwise: "insufficient signal, closest candidates: ...".
  Thresholds are not hand-picked: they are set from the eval harness to hit
  a held-out precision floor (family >= 95%, version >= 99%) and re-derived
  on every catalog change.
- - trained-set disclosure: "among the 14 models in this catalog" printed on
+  - trained-set disclosure: "among the 14 models in this catalog" printed on
  every result. Out-of-catalog text gets "no catalog match", never a forced
  pick.
 - Eval (`teLLeM eval`): held-out self-test per corpus, published confusion

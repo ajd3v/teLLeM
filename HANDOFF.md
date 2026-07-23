@@ -15,10 +15,10 @@ session needs to start building without re-deriving context.
  Crates stay lowercase tellem-*. Local folder: ~/Projects/ajd3v/teLLeM (owner renamed from tell-em).
 - License MIT. Public repo intent confirmed by owner.
 - Spec grill session (2026-07-22) settled three decisions, now in SPEC.md:
- 1. fix guarantee is scoped: monotonic (never scores worse) plus complete
+  1. fix guarantee is scoped: monotonic (never scores worse) plus complete
  for claimed T/P rules. S-rules out of scope, surfaced via --suggest.
- 2. The 1 GB/s lint target STAYS (owner call, aspirational constraint).
- 3. Fingerprint catalog is PUBLIC (it is the deliverable, moat = freshness).
+  2. The 1 GB/s lint target STAYS (owner call, aspirational constraint).
+  3. Fingerprint catalog is PUBLIC (it is the deliverable, moat = freshness).
  Private: raw corpora, calibrated weight overrides, pre-release refreshes.
  Bonus: who thresholds derive from the eval harness precision floor
  (family >= 95%, version >= 99%), never hand-picked.
@@ -40,7 +40,7 @@ his style guide and validated tell patterns:
  real, genuine, proven, legitimate).
 5. Identity vs verb claims: prefer "builds production AI systems" over "AI
  systems engineer" when unpaid/unconferred. Style guidance, probably a
- --suggest note, not a lint error.
+  --suggest note, not a lint error.
 6. "end to end" flagged as filler in summary context. Candidate for a
  weak-weight cliche rule.
 7. Run-on tails: owner asked for a run-on split. S-rule candidate: sentence
