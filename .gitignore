@@ -1,4 +1,5 @@
 /target
+*.node
 packs/owner.toml
 packs/private*.toml
 corpora/

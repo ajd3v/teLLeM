@@ -1,0 +1,19 @@
+[package]
+name = "tellem-node"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "teLLeM napi bindings, the platform's deai pass"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+tellem-core = { path = "../tellem-core" }
+napi = "2"
+napi-derive = "2"
+serde_json = "1"
+
+[build-dependencies]
+napi-build = "2"

@@ -1,6 +1,11 @@
 [workspace]
 resolver = "2"
-members = ["crates/tellem-core", "crates/tellem-cli"]
+members = [
+    "crates/tellem-core",
+    "crates/tellem-cli",
+    "crates/tellem-wasm",
+    "crates/tellem-node",
+]
 
 [workspace.package]
 version = "0.1.0"
