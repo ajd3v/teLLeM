@@ -10,10 +10,18 @@ session needs to start building without re-deriving context.
 - No code exists yet. M1 (SPEC "Milestones") is the next unit of work:
  cargo workspace, tellem-core + tellem-cli, base rule pack, lint + fix,
  criterion benches, parity tests against the platform's deai.ts.
-- Name: **teLLeM** (display + repo, github.com/ajd3v/teLLeM, not yet created).
+- Name: **teLLeM** (display + repo, github.com/ajd3v/teLLeM, created 2026-07-22
+ as PRIVATE, flip to public at M1 publishable).
  Crates stay lowercase tellem-*. Local folder: ~/Projects/ajd3v/teLLeM (owner renamed from tell-em).
-- License MIT. Public repo intent confirmed by owner. Secret sauce = private
- rule packs and fingerprint catalogs (config, never code).
+- License MIT. Public repo intent confirmed by owner.
+- Spec grill session (2026-07-22) settled three decisions, now in SPEC.md:
+ 1. fix guarantee is scoped: monotonic (never scores worse) plus complete
+ for claimed T/P rules. S-rules out of scope, surfaced via --suggest.
+ 2. The 1 GB/s lint target STAYS (owner call, aspirational constraint).
+ 3. Fingerprint catalog is PUBLIC (it is the deliverable, moat = freshness).
+ Private: raw corpora, calibrated weight overrides, pre-release refreshes.
+ Bonus: who thresholds derive from the eval harness precision floor
+ (family >= 95%, version >= 99%), never hand-picked.
 
 ## Owner voice pack: seed rules discovered 2026-07-22 (put in packs/owner.toml, PRIVATE)
 

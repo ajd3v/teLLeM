@@ -10,10 +10,12 @@ teLLeM fix <text> # rewrite the tells away (the de-AI pass)
 teLLeM who <text> # attribute: which model family (and maybe version) wrote this
 ```
 
-Public repo: github.com/ajd3v/teLLeM (MIT). The engine, base rule pack, and
-harvest/eval tooling are public. Calibrated rule packs and fingerprint
-catalogs built from private harvesting stay private ("secret sauce" = config,
-not code).
+Public repo: github.com/ajd3v/teLLeM (MIT, private while pre-M1). The engine,
+base rule pack, harvest/eval tooling, and the fingerprint catalog are public.
+The catalog is the deliverable and the moat is the re-harvest loop (freshness),
+not secrecy. What stays private: raw harvested corpora (API ToS exposure),
+calibrated rule-pack weight overrides, and catalog refreshes ahead of the
+public cycle ("secret sauce" = config, never code).
 
 ## Why this exists
 
@@ -61,8 +63,10 @@ Input: text (file, stdin, or library call). Output: findings with spans.
  in/diff out. (An optional `--suggest` mode may LIST structural fixes, e.g.
  "vary these 9 identical bullet openers", but never rewrites structure
  silently.)
-- Guarantee: `fix` output re-linted always scores clean-or-better, and a
- provided test corpus round-trips with meaning intact (golden tests).
+- Guarantee (CI-enforced, scoped to what fix touches): output re-linted never
+ scores worse, and every T/P finding that fix claims to handle is gone on
+ re-lint. S-rules are out of scope by design and surface via `--suggest`.
+ A provided test corpus round-trips with meaning intact (golden tests).
 
 ## Component 3, who (the model attributor)
 
@@ -110,6 +114,9 @@ fingerprints, honest about its limits.
  Gemini 3 profile at 8x baseline..."),
  - calls a FAMILY only above a margin threshold, calls a VERSION only above
  a stricter one, otherwise: "insufficient signal, closest candidates: ...".
+ Thresholds are not hand-picked: they are set from the eval harness to hit
+ a held-out precision floor (family >= 95%, version >= 99%) and re-derived
+ on every catalog change.
  - trained-set disclosure: "among the 14 models in this catalog" printed on
  every result. Out-of-catalog text gets "no catalog match", never a forced
  pick.
