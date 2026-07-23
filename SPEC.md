@@ -64,8 +64,10 @@ Input: text (file, stdin, or library call). Output: findings with spans.
  "vary these 9 identical bullet openers", but never rewrites structure
  silently.)
 - Guarantee (CI-enforced, scoped to what fix touches): output re-linted never
- scores worse, and every T/P finding that fix claims to handle is gone on
- re-lint. S-rules are out of scope by design and surface via `--suggest`.
+ gains total tell weight, and every T/P finding that fix claims to handle is
+ gone on re-lint. Total weight, not density, is the metric because deleting
+ filler shrinks the word count and can raise density on tiny inputs.
+ S-rules are out of scope by design and surface via `--suggest`.
  A provided test corpus round-trips with meaning intact (golden tests).
 
 ## Component 3, who (the model attributor)

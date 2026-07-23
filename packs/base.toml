@@ -1,0 +1,730 @@
+# teLLeM base rule pack (public, MIT). Seeds: Wikipedia "Signs of AI writing",
+# awesome-slop, antislop-sampler, slop-gate, and the gainful deAi pass.
+# Owner-specific rules (roles to jobs, semicolon ban) live in private packs.
+
+[meta]
+name = "base"
+version = "0.1.0"
+
+[bands]
+seasoned = 2.0
+heavy = 6.0
+
+# ---------- T rules: lexical tells ----------
+
+[[rules]]
+id = "T001"
+name = "em-dash"
+kind = "regex"
+pattern = "—"
+weight = 1.0
+rationale = "em-dash density is the top measurable tell, humans reach for commas"
+
+[[rules]]
+id = "T002"
+name = "spaced-en-dash"
+kind = "regex"
+pattern = " – "
+weight = 1.0
+rationale = "spaced en-dash as a clause break is machine punctuation"
+
+[[rules]]
+id = "T003"
+name = "curly-double-quotes"
+kind = "regex"
+pattern = "[“”]"
+weight = 0.2
+replace = '"'
+rationale = "curly double quotes in plain text signal generated or pasted prose"
+
+[[rules]]
+id = "T004"
+name = "curly-single-quotes"
+kind = "regex"
+pattern = "[‘’]"
+weight = 0.1
+replace = "'"
+rationale = "curly apostrophes in plain text signal generated or pasted prose"
+
+[[rules]]
+id = "T005"
+name = "not-x-but-y"
+kind = "regex"
+pattern = '(?i)\bnot (?:just|only|merely) \w+, but\b'
+weight = 0.6
+rationale = "the not X but Y contrast frame is a strong rhetorical tell"
+
+[[rules]]
+id = "T006"
+name = "semicolon-density"
+kind = "regex"
+pattern = ";"
+weight = 0.3
+rationale = "semicolons are rare in casual human prose and dense in generated text"
+
+[[rules]]
+id = "T010"
+name = "architected"
+kind = "word"
+weight = 1.0
+rationale = "architect as a verb is resume-generator dialect"
+[rules.swaps]
+architected = "built"
+architecting = "building"
+
+[[rules]]
+id = "T011"
+name = "leverage"
+kind = "word"
+weight = 1.0
+rationale = "leverage as a verb for use is top-tier slop vocabulary"
+[rules.swaps]
+leverage = "use"
+leverages = "uses"
+leveraged = "used"
+leveraging = "using"
+
+[[rules]]
+id = "T012"
+name = "utilize"
+kind = "word"
+weight = 1.0
+rationale = "utilize is use wearing a lab coat"
+[rules.swaps]
+utilize = "use"
+utilizes = "uses"
+utilized = "used"
+utilizing = "using"
+utilise = "use"
+utilises = "uses"
+utilised = "used"
+utilising = "using"
+
+[[rules]]
+id = "T013"
+name = "delve"
+kind = "word"
+weight = 1.2
+rationale = "delve rose 10x in abstracts post ChatGPT (Science Advances, 15M abstracts)"
+[rules.swaps]
+delve = "look"
+delves = "looks"
+delved = "looked"
+delving = "looking"
+
+[[rules]]
+id = "T014"
+name = "showcase"
+kind = "word"
+weight = 1.0
+rationale = "showcase as a verb is portfolio-generator dialect"
+[rules.swaps]
+showcase = "show"
+showcases = "shows"
+showcased = "showed"
+showcasing = "showing"
+
+[[rules]]
+id = "T015"
+name = "underscore"
+kind = "word"
+weight = 1.0
+rationale = "underscores as emphasizes is academic slop"
+[rules.swaps]
+underscore = "highlight"
+underscores = "highlights"
+underscored = "highlighted"
+underscoring = "highlighting"
+
+[[rules]]
+id = "T016"
+name = "harness-verb"
+kind = "word"
+weight = 1.0
+rationale = "harness as a verb for use is slop, the noun (test harness) is legitimate"
+unless_preceded_by = [
+  "the", "a", "an", "this", "that", "these", "those",
+  "its", "our", "their", "my", "your",
+  "test", "tests", "eval", "evals", "evaluation", "wiring", "cable", "safety",
+]
+[rules.swaps]
+harness = "use"
+harnesses = "uses"
+harnessed = "used"
+harnessing = "using"
+
+[[rules]]
+id = "T017"
+name = "bolster"
+kind = "word"
+weight = 0.8
+rationale = "bolster is press-release vocabulary"
+[rules.swaps]
+bolster = "strengthen"
+bolsters = "strengthens"
+bolstered = "strengthened"
+bolstering = "strengthening"
+
+[[rules]]
+id = "T018"
+name = "streamline"
+kind = "word"
+weight = 0.8
+rationale = "streamline is corporate filler for simplify"
+[rules.swaps]
+streamline = "simplify"
+streamlines = "simplifies"
+streamlined = "simplified"
+streamlining = "simplifying"
+
+[[rules]]
+id = "T019"
+name = "meticulous"
+kind = "word"
+weight = 1.0
+rationale = "meticulous(ly) is a top over-represented model adverb family"
+[rules.swaps]
+meticulous = "careful"
+meticulously = "carefully"
+
+[[rules]]
+id = "T020"
+name = "boast"
+kind = "word"
+weight = 0.8
+rationale = "products that boast features are machine-written products"
+[rules.swaps]
+boast = "have"
+boasts = "has"
+
+[[rules]]
+id = "T021"
+name = "pivotal"
+kind = "word"
+weight = 1.0
+rationale = "pivotal is a top over-represented model adjective"
+[rules.swaps]
+pivotal = "key"
+
+[[rules]]
+id = "T022"
+name = "intricate"
+kind = "word"
+weight = 0.8
+rationale = "intricate is over-represented in model prose"
+[rules.swaps]
+intricate = "complex"
+intricacies = "details"
+
+[[rules]]
+id = "T023"
+name = "realm"
+kind = "word"
+weight = 1.0
+rationale = "realm outside fantasy fiction is model dialect"
+[rules.swaps]
+realm = "area"
+realms = "areas"
+
+[[rules]]
+id = "T024"
+name = "testament"
+kind = "word"
+weight = 1.0
+rationale = "a testament to is a canonical model formula"
+[rules.swaps]
+testament = "sign"
+testaments = "signs"
+
+[[rules]]
+id = "T025"
+name = "myriad"
+kind = "word"
+weight = 0.8
+rationale = "myriad is over-represented in model prose"
+[rules.swaps]
+myriad = "many"
+
+[[rules]]
+id = "T026"
+name = "seamless"
+kind = "word"
+weight = 0.8
+rationale = "seamless(ly) is marketing slop beloved by models"
+[rules.swaps]
+seamless = "smooth"
+seamlessly = "smoothly"
+
+[[rules]]
+id = "T027"
+name = "garner"
+kind = "word"
+weight = 0.8
+rationale = "garner is over-represented in model prose"
+[rules.swaps]
+garner = "gain"
+garners = "gains"
+garnered = "gained"
+garnering = "gaining"
+
+[[rules]]
+id = "T028"
+name = "endeavor"
+kind = "word"
+weight = 0.8
+rationale = "endeavor as a noun for effort is model formality"
+[rules.swaps]
+endeavor = "effort"
+endeavors = "efforts"
+endeavour = "effort"
+endeavours = "efforts"
+
+[[rules]]
+id = "T029"
+name = "noteworthy"
+kind = "word"
+weight = 0.6
+rationale = "noteworthy is over-represented in model prose"
+[rules.swaps]
+noteworthy = "notable"
+
+[[rules]]
+id = "T030"
+name = "paramount"
+kind = "word"
+weight = 0.8
+rationale = "paramount is over-represented in model prose"
+[rules.swaps]
+paramount = "essential"
+
+# report-only words (no safe universal swap)
+
+[[rules]]
+id = "T033"
+name = "tapestry"
+kind = "word"
+weight = 1.2
+patterns = ["tapestry", "tapestries"]
+rationale = "rich tapestry metaphors are canonical slop"
+
+[[rules]]
+id = "T034"
+name = "plethora"
+kind = "word"
+weight = 0.8
+patterns = ["plethora"]
+rationale = "plethora is over-represented in model prose"
+
+[[rules]]
+id = "T035"
+name = "holistic"
+kind = "word"
+weight = 0.6
+patterns = ["holistic", "holistically"]
+rationale = "holistic outside medicine is consultant slop models love"
+
+[[rules]]
+id = "T036"
+name = "synergy"
+kind = "word"
+weight = 0.8
+patterns = ["synergy", "synergies", "synergistic"]
+rationale = "synergy is corporate slop models reproduce"
+
+[[rules]]
+id = "T037"
+name = "multifaceted"
+kind = "word"
+weight = 0.8
+patterns = ["multifaceted"]
+rationale = "multifaceted is over-represented in model prose"
+
+[[rules]]
+id = "T038"
+name = "transformative"
+kind = "word"
+weight = 0.6
+patterns = ["transformative"]
+rationale = "transformative is over-represented in model prose"
+
+[[rules]]
+id = "T039"
+name = "commendable"
+kind = "word"
+weight = 0.8
+patterns = ["commendable"]
+rationale = "commendable is reviewer-bot vocabulary"
+
+[[rules]]
+id = "T040"
+name = "unleash"
+kind = "word"
+weight = 0.8
+patterns = ["unleash", "unleashes", "unleashed", "unleashing"]
+rationale = "unleashing potential is marketing slop"
+
+[[rules]]
+id = "T041"
+name = "embark"
+kind = "word"
+weight = 0.8
+patterns = ["embark", "embarks", "embarked", "embarking"]
+rationale = "embarking on journeys is canonical model framing"
+
+[[rules]]
+id = "T042"
+name = "moreover"
+kind = "word"
+weight = 0.4
+patterns = ["moreover"]
+rationale = "moreover is an over-represented model connective"
+
+[[rules]]
+id = "T043"
+name = "furthermore"
+kind = "word"
+weight = 0.4
+patterns = ["furthermore"]
+rationale = "furthermore is an over-represented model connective"
+
+[[rules]]
+id = "T044"
+name = "additionally"
+kind = "word"
+weight = 0.3
+patterns = ["additionally"]
+rationale = "additionally as a sentence opener is model glue"
+
+[[rules]]
+id = "T045"
+name = "vibrant"
+kind = "word"
+weight = 0.4
+patterns = ["vibrant"]
+rationale = "vibrant is over-represented in model description"
+
+[[rules]]
+id = "T046"
+name = "crucial"
+kind = "word"
+weight = 0.3
+patterns = ["crucial", "crucially"]
+rationale = "crucial at high density is a model emphasis habit"
+
+[[rules]]
+id = "T047"
+name = "landscape-metaphor"
+kind = "word"
+weight = 0.3
+patterns = ["landscape", "landscapes"]
+rationale = "the landscape of X metaphor is model framing"
+
+[[rules]]
+id = "T048"
+name = "journey-metaphor"
+kind = "word"
+weight = 0.3
+patterns = ["journey", "journeys"]
+rationale = "calling ordinary work a journey is model framing"
+
+[[rules]]
+id = "T049"
+name = "empower"
+kind = "word"
+weight = 0.5
+patterns = ["empower", "empowers", "empowered", "empowering"]
+rationale = "empowering users is marketing slop"
+
+[[rules]]
+id = "T050"
+name = "invaluable"
+kind = "word"
+weight = 0.5
+patterns = ["invaluable"]
+rationale = "invaluable is over-represented in model prose"
+
+[[rules]]
+id = "T051"
+name = "foster"
+kind = "word"
+weight = 0.5
+patterns = ["fosters", "fostered", "fostering"]
+rationale = "fostering collaboration is model formality, foster care is not"
+
+[[rules]]
+id = "T052"
+name = "elevate"
+kind = "word"
+weight = 0.4
+patterns = ["elevate", "elevates", "elevating"]
+rationale = "elevating experiences is marketing slop, elevated privileges are real"
+
+# ---------- P rules: phrase tells ----------
+
+[[rules]]
+id = "P001"
+name = "shed-light-on"
+kind = "phrase"
+patterns = ["shed light on", "sheds light on", "shedding light on"]
+replace = "shows"
+weight = 1.0
+rationale = "shed light on is a canonical model cliche"
+
+[[rules]]
+id = "P002"
+name = "navigate-the-landscape"
+kind = "regex"
+pattern = '(?i)\bnavigat(?:e|es|ing) the (?:complex )?landscape of\b'
+replace = "work through"
+weight = 1.2
+rationale = "navigating landscapes is peak model metaphor"
+
+[[rules]]
+id = "P003"
+name = "fast-paced-world"
+kind = "regex"
+pattern = "(?i)\\bin today['’]?s fast[- ]paced (?:world|environment|market)\\b,?\\s*"
+replace = ""
+weight = 1.5
+rationale = "in today's fast-paced world is throat-clearing no human types"
+
+[[rules]]
+id = "P004"
+name = "worth-noting"
+kind = "regex"
+pattern = "(?i)\\bit['’]?s worth noting that\\b\\s*"
+replace = ""
+weight = 1.0
+rationale = "it's worth noting that is filler, the sentence works without it"
+
+[[rules]]
+id = "P005"
+name = "important-to-note"
+kind = "regex"
+pattern = '(?i)\bit is important to note that\b\s*'
+replace = ""
+weight = 1.0
+rationale = "it is important to note that is filler, delete and nothing is lost"
+
+[[rules]]
+id = "P006"
+name = "that-being-said"
+kind = "regex"
+pattern = '(?i)\bthat being said,?\s*'
+replace = ""
+weight = 0.8
+rationale = "that being said is a model transition tic"
+
+[[rules]]
+id = "P007"
+name = "at-its-core"
+kind = "regex"
+pattern = '(?i)\bat its core,?\s*'
+weight = 0.8
+replace = ""
+rationale = "at its core is a model framing tic"
+
+[[rules]]
+id = "P008"
+name = "needless-to-say"
+kind = "regex"
+pattern = '(?i)\bneedless to say,?\s*'
+replace = ""
+weight = 0.8
+rationale = "if it is needless to say, the model said it anyway"
+
+[[rules]]
+id = "P009"
+name = "without-further-ado"
+kind = "regex"
+pattern = '(?i)\bwithout further ado,?\s*'
+replace = ""
+weight = 1.0
+rationale = "without further ado is listicle-generator glue"
+
+[[rules]]
+id = "P010"
+name = "goes-without-saying"
+kind = "regex"
+pattern = '(?i)\bit goes without saying that\b\s*'
+replace = ""
+weight = 0.8
+rationale = "it goes without saying, yet the model says it"
+
+# report-only phrases
+
+[[rules]]
+id = "P020"
+name = "deep-dive"
+kind = "phrase"
+patterns = ["deep dive", "deep dives", "dive deeper into", "dive into"]
+weight = 0.5
+rationale = "diving into topics is a model motion metaphor"
+
+[[rules]]
+id = "P021"
+name = "in-conclusion"
+kind = "phrase"
+patterns = ["in conclusion", "in summary", "to summarize", "to sum up"]
+weight = 0.5
+rationale = "explicit summary markers are essay-bot structure"
+
+[[rules]]
+id = "P022"
+name = "end-of-the-day"
+kind = "phrase"
+patterns = ["at the end of the day"]
+weight = 0.5
+rationale = "at the end of the day is filler models over-produce"
+
+[[rules]]
+id = "P023"
+name = "first-and-foremost"
+kind = "phrase"
+patterns = ["first and foremost"]
+weight = 0.5
+rationale = "first and foremost is over-represented model glue"
+
+[[rules]]
+id = "P024"
+name = "look-no-further"
+kind = "phrase"
+patterns = ["look no further"]
+weight = 1.0
+rationale = "look no further is ad-copy slop"
+
+[[rules]]
+id = "P025"
+name = "game-changer"
+kind = "phrase"
+patterns = ["game changer", "game-changer", "game-changing"]
+weight = 0.8
+rationale = "game changer is hype slop models reproduce"
+
+[[rules]]
+id = "P026"
+name = "cutting-edge"
+kind = "phrase"
+patterns = ["cutting-edge", "cutting edge"]
+weight = 0.6
+rationale = "cutting-edge is default model praise for any technology"
+
+[[rules]]
+id = "P027"
+name = "unlock-the-power"
+kind = "phrase"
+patterns = ["unlock the power", "unlock the potential", "harness the power"]
+weight = 1.0
+rationale = "unlocking power and potential is marketing slop"
+
+[[rules]]
+id = "P028"
+name = "possibilities-endless"
+kind = "phrase"
+patterns = ["the possibilities are endless"]
+weight = 1.0
+rationale = "the possibilities are endless is canonical closer slop"
+
+[[rules]]
+id = "P029"
+name = "revolutionize"
+kind = "phrase"
+patterns = ["revolutionize the way", "revolutionise the way"]
+weight = 0.8
+rationale = "revolutionizing the way we X is hype slop"
+
+[[rules]]
+id = "P030"
+name = "in-essence"
+kind = "phrase"
+patterns = ["in essence"]
+weight = 0.4
+rationale = "in essence is a model summarizing tic"
+
+[[rules]]
+id = "P031"
+name = "when-it-comes-to"
+kind = "phrase"
+patterns = ["when it comes to"]
+weight = 0.3
+rationale = "when it comes to is low-signal filler models overuse"
+
+[[rules]]
+id = "P032"
+name = "email-finds-you-well"
+kind = "phrase"
+patterns = ["i hope this email finds you well", "hope this message finds you well"]
+weight = 1.5
+rationale = "the canonical generated-email opener"
+
+[[rules]]
+id = "P033"
+name = "as-an-ai"
+kind = "phrase"
+patterns = ["as an ai language model", "as an ai assistant"]
+weight = 5.0
+rationale = "the model told you itself"
+
+[[rules]]
+id = "P034"
+name = "stands-serves-as"
+kind = "phrase"
+patterns = ["stands as a", "serves as a"]
+weight = 0.5
+rationale = "stands as and serves as are model copula inflation"
+
+[[rules]]
+id = "P035"
+name = "ever-evolving"
+kind = "phrase"
+patterns = ["ever-evolving", "ever evolving"]
+weight = 0.8
+rationale = "ever-evolving is canonical model filler"
+
+[[rules]]
+id = "P036"
+name = "end-to-end-filler"
+kind = "phrase"
+patterns = ["end to end", "end-to-end"]
+weight = 0.3
+rationale = "end to end is filler in summaries, real in systems talk, judge in context"
+
+[[rules]]
+id = "P037"
+name = "wealth-of"
+kind = "phrase"
+patterns = ["a wealth of"]
+weight = 0.6
+rationale = "a wealth of is over-represented model quantity framing"
+
+[[rules]]
+id = "P038"
+name = "treasure-trove"
+kind = "phrase"
+patterns = ["treasure trove"]
+weight = 0.8
+rationale = "treasure trove is canonical model metaphor"
+
+[[rules]]
+id = "P039"
+name = "double-edged-sword"
+kind = "phrase"
+patterns = ["double-edged sword", "double edged sword"]
+weight = 0.6
+rationale = "double-edged sword is a model balance cliche"
+
+[[rules]]
+id = "P040"
+name = "digital-age"
+kind = "phrase"
+patterns = ["the digital age", "in the digital era"]
+weight = 0.6
+rationale = "the digital age framing is essay-bot scene setting"
+
+[[rules]]
+id = "P041"
+name = "defensive-qualifier"
+kind = "regex"
+pattern = '(?i)\b(?:paid|actual|real|genuine|proven|legitimate)\s+(?:experience|work|results?|skills?)\b'
+weight = 0.4
+rationale = "qualifiers that defend a claim weaken it, state the claim plainly"
