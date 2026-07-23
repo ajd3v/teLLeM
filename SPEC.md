@@ -165,3 +165,46 @@ what evidence-cited linting + closed-set attribution can honestly do instead.
 The repo demonstrates: Rust systems performance, corpus statistics, eval
 discipline, and the refuse-below-threshold philosophy in a domain where every
 competitor overclaims.
+
+## Prior art and reusable assets (landscape survey, 2026-07-22, URLs verified)
+
+Verdict from the survey: binary human-vs-AI detection is crowded and
+discredited (OpenAI retired its own classifier at ~26% TPR); explainable
+tell-linting is sparse (toy CLIs only); principled rule-based rewriting is
+essentially unoccupied (the field is detector-evasion ware); and
+**model-family attribution with interpretable fingerprints is genuinely open,
+with zero Rust presence in any of the three capabilities.**
+
+Validation that `who` works: locuslab's "Idiosyncrasies in Large Language
+Models" (arXiv 2502.12150) hit 97.1% on 5-way ChatGPT/the assistant/Grok/Gemini/
+DeepSeek attribution, with the signal rooted in word-level distributions that
+survive paraphrase, exactly the feature class our miner extracts. LLMDet
+(EMNLP 2023) validates the pre-recorded per-model n-gram dictionary approach
+(classify without running the models); its stale 2023 model list proves why
+the harvester/re-harvest loop is the moat.
+
+Reusable inputs:
+- **Rule seeds**: Wikipedia "Signs of AI writing" (CC BY-SA, the best curated
+  tell catalog), awesome-slop JSON packs (CC0, incl. translationese),
+  antislop-sampler's slop-phrase lists (Apache-2.0, 350 stars, ICLR 2026),
+  slop-gate's ~40 tells. Per-rule receipts can cite the Science Advances
+  15M-abstract study ("delve" 10.45x post-ChatGPT) for credibility.
+- **Corpora/eval**: MAGE (27 LLMs, 7 families, 10 domains — best attribution
+  training set), M4/M4GT-Bench (multilingual, EACL 2024), locuslab per-model
+  response corpora, DetectRL (adversarial). slop-forensics (357 stars, MIT)
+  is the closest methodological cousin: per-model over-represented word/
+  bigram profiles + phylogenetic clustering; an offline Python toolkit with
+  no classifier and no linting — we productize what it prototypes.
+- **Design to emulate**: Vale's YAML style/rule format (our TOML packs should
+  be near-isomorphic; consider a pack-to-Vale exporter for adoption), GLTR's
+  token-level visual explanation UX.
+- **Rust**: aho-corasick + fst (BurntSushi), HF tokenizers (real BPE token
+  frequencies), linfa (explainable NB/logreg), criterion. The stylometry
+  crate is dormant and basic; no Rust AI-text-detection/attribution crate
+  exists.
+- **Taxonomy note**: LLM-DetectAIve's 4-way (human / machine /
+  machine-humanized / human-polished) matters — `lint` should eventually
+  flag "humanized" texture too (the evasion arms race is detectable).
+- Watermarking (SynthID etc.) requires generator cooperation; stylometric
+  fingerprinting is the only third-party attribution path. Phantom dataset
+  warning: "PANDORA" could not be verified to exist.
