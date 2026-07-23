@@ -7,9 +7,15 @@ session needs to start building without re-deriving context.
 
 - SPEC.md is complete and owner-approved: three verbs (lint / fix / who) on
  one Rust engine, receipts on every finding, refuses below threshold.
-- No code exists yet. M1 (SPEC "Milestones") is the next unit of work:
- cargo workspace, tellem-core + tellem-cli, base rule pack, lint + fix,
- criterion benches, parity tests against the platform's deai.ts.
+- M1 SHIPPED (2026-07-22): workspace, tellem-core + tellem-cli, 70-rule base
+ pack, lint + fix, 13 parity/regression tests, criterion bench (honest
+ number: ~93 MiB/s single thread, README documents the gap to the 1 GB/s
+ target), GitHub Actions CI green.
+- M2 bindings SHIPPED: tellem-wasm (lint_json + fix, wasm32 target checked
+ in CI) and tellem-node (napi, deAi drop-in + lintJson, node parity test in
+ CI). NOT yet done: gainful consuming tellem-node, site widget in
+ devaney-site. Those are cross-repo changes, do them with the owner.
+- who / harvest / mine (M3) not started.
 - Name: **teLLeM** (display + repo, github.com/ajd3v/teLLeM, created 2026-07-22
  as PRIVATE, flip to public at M1 publishable).
  Crates stay lowercase tellem-*. Local folder: ~/Projects/ajd3v/teLLeM (owner renamed from tell-em).
