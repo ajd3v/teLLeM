@@ -1,9 +1,11 @@
 //! tellem-core: rules, scoring, and deterministic fixes for AI-text forensics.
 //! Every finding carries its receipt (rule id + rationale). No human-vs-AI verdict.
 
+pub mod attribute;
 mod fix;
 mod lint;
 mod mask;
+pub mod mine;
 
 use std::collections::HashMap;
 

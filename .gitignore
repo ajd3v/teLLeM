@@ -3,3 +3,6 @@
 packs/owner.toml
 packs/private*.toml
 corpora/
+
+# Harvested and downloaded corpora stay local (SPEC: raw corpora are private).
+corpora/

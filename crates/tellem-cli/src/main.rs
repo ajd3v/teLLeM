@@ -1,3 +1,5 @@
+mod attribute_cmd;
+
 use clap::{Parser, Subcommand, ValueEnum};
 use std::io::Read;
 use std::path::PathBuf;
@@ -34,6 +36,38 @@ enum Cmd {
         /// Rewrite the file in place instead of printing (`fix f > f` truncates it)
         #[arg(long, short)]
         write: bool,
+    },
+    /// Learn per-family fingerprints from a labelled JSONL corpus
+    Mine {
+        corpus: PathBuf,
+        #[arg(long, short, default_value = "catalog.toml")]
+        out: PathBuf,
+        /// Features kept per family, by |z|
+        #[arg(long, default_value_t = 400)]
+        top_k: usize,
+    },
+    /// Closed-set model attribution, refuses below the margin
+    Who {
+        file: Option<PathBuf>,
+        #[arg(long, short, default_value = "catalog.toml")]
+        catalog: PathBuf,
+        /// Margin threshold. Derive it with `eval`, do not guess it.
+        #[arg(long, default_value_t = 0.10)]
+        margin: f32,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Held-out eval: derive the margin that holds the precision floor
+    Eval {
+        corpus: PathBuf,
+        #[arg(long, default_value_t = 400)]
+        top_k: usize,
+        /// Precision floor the threshold must hold (the invariant)
+        #[arg(long, default_value_t = 0.95)]
+        floor: f32,
+        /// Percent of prompts held out
+        #[arg(long, default_value_t = 20)]
+        holdout: u64,
     },
 }
 
@@ -93,6 +127,19 @@ fn run() -> Result<(), tellem_core::Error> {
                 std::process::exit(1);
             }
         }
+        Cmd::Mine { corpus, out, top_k } => attribute_cmd::mine_cmd(&corpus, &out, top_k)?,
+        Cmd::Who {
+            file,
+            catalog,
+            margin,
+            json,
+        } => attribute_cmd::who_cmd(file, &catalog, margin, json)?,
+        Cmd::Eval {
+            corpus,
+            top_k,
+            floor,
+            holdout,
+        } => attribute_cmd::eval_cmd(&corpus, top_k, floor, holdout)?,
         Cmd::Fix { file, pack, write } => {
             let text = read_input(&file)?;
             let fixed = engine(&pack)?.fix(&text);
