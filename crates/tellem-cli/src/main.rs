@@ -1,7 +1,7 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use std::io::Read;
 use std::path::PathBuf;
-use tellem_core::{Engine, Pack};
+use tellem_core::{Band, Engine, Pack};
 
 #[derive(Parser)]
 #[command(name = "tellem", version, about = "AI-text forensics with receipts")]
@@ -21,6 +21,9 @@ enum Cmd {
         pack: Vec<PathBuf>,
         #[arg(long)]
         json: bool,
+        /// Exit 1 when the band reaches this level (for CI gates)
+        #[arg(long, value_name = "BAND")]
+        fail_on: Option<BandArg>,
     },
     /// Rewrite the tells away, deterministic and reviewable
     Fix {
@@ -28,7 +31,27 @@ enum Cmd {
         file: Option<PathBuf>,
         #[arg(long)]
         pack: Vec<PathBuf>,
+        /// Rewrite the file in place instead of printing (`fix f > f` truncates it)
+        #[arg(long, short)]
+        write: bool,
     },
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum BandArg {
+    Clean,
+    Seasoned,
+    Heavy,
+}
+
+impl From<Band> for BandArg {
+    fn from(b: Band) -> BandArg {
+        match b {
+            Band::Clean => BandArg::Clean,
+            Band::Seasoned => BandArg::Seasoned,
+            Band::Heavy => BandArg::Heavy,
+        }
+    }
 }
 
 fn main() {
@@ -40,7 +63,12 @@ fn main() {
 
 fn run() -> Result<(), tellem_core::Error> {
     match Cli::parse().cmd {
-        Cmd::Lint { file, pack, json } => {
+        Cmd::Lint {
+            file,
+            pack,
+            json,
+            fail_on,
+        } => {
             let text = read_input(&file)?;
             let report = engine(&pack)?.lint(&text);
             if json {
@@ -61,10 +89,18 @@ fn run() -> Result<(), tellem_core::Error> {
                     report.band
                 );
             }
+            if fail_on.is_some_and(|f| BandArg::from(report.band) >= f) {
+                std::process::exit(1);
+            }
         }
-        Cmd::Fix { file, pack } => {
+        Cmd::Fix { file, pack, write } => {
             let text = read_input(&file)?;
-            print!("{}", engine(&pack)?.fix(&text));
+            let fixed = engine(&pack)?.fix(&text);
+            match (write, &file) {
+                (true, Some(p)) => std::fs::write(p, fixed)?,
+                (true, None) => return Err("--write needs a file, not stdin".into()),
+                (false, _) => print!("{fixed}"),
+            }
         }
     }
     Ok(())

@@ -52,7 +52,8 @@ impl Engine {
             .iter()
             .map(|&(s, e)| text[s..e].split_whitespace().count())
             .sum();
-        let total_weight: f32 = findings.iter().map(|f| f.weight).sum();
+        // + 0.0 because f32's empty sum is -0.0, which prints as "-0.0" in JSON
+        let total_weight: f32 = findings.iter().map(|f| f.weight).sum::<f32>() + 0.0;
         let kw = words as f32 / 1000.0;
         let score = if words == 0 { 0.0 } else { total_weight / kw };
         let band = if score >= self.bands.heavy {

@@ -1,6 +1,10 @@
 //! Prose masking: byte ranges (code fences, inline code, URLs) that lint and
 //! fix must not touch, so tells in prose aren't confused with code.
 // ponytail: no HTML tokenizer yet, add one when an HTML consumer shows up.
+// ponytail: 4-space indented code blocks are NOT masked. The naive rule (any
+// 4-space indent) also swallows nested list prose, which would silently stop
+// linting it. Needs real block parsing, do that when a corpus actually uses
+// indented code instead of fences.
 
 use regex::Regex;
 use std::sync::OnceLock;

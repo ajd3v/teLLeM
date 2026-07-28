@@ -123,6 +123,28 @@ fn masked_regions_untouched() {
 }
 
 #[test]
+fn markdown_whitespace_survives() {
+    // Regression c012aab: the TS pass ate nested-list indent. Hard line breaks
+    // (two trailing spaces) are markdown too. Only mid-line runs collapse.
+    let e = eng();
+    let md = "- a\n    - nested delve item\n";
+    assert_eq!(e.fix(md), "- a\n    - nested look item\n");
+    assert_eq!(e.fix("a hard break  \nnext line"), "a hard break  \nnext line");
+    assert_eq!(e.fix("collapsed  here"), "collapsed here");
+}
+
+#[test]
+fn pack_rule_ids_are_unique() {
+    // Later packs override by id on purpose, so a dupe inside one pack is a
+    // silent rule loss. 70 rules is past the count where eyeballing works.
+    let pack = Pack::parse(tellem_core::BASE_PACK).unwrap();
+    let mut seen = std::collections::HashSet::new();
+    for r in &pack.rules {
+        assert!(seen.insert(r.id.clone()), "duplicate rule id {}", r.id);
+    }
+}
+
+#[test]
 fn curly_quotes_normalized() {
     let e = eng();
     assert_eq!(e.fix("“fine” work, it’s good"), "\"fine\" work, it's good");

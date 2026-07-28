@@ -21,7 +21,7 @@ re!(re_num_range, r"(\d)\s*[\u{2013}\u{2014}]\s*(\d)");
 re!(re_em_dash, r"\s*\u{2014}\s*");
 re!(re_sp_en_dash, r" \u{2013} ");
 re!(re_word, r"[A-Za-z]+");
-re!(re_spaces, r" {2,}");
+re!(re_spaces, r"[ \t]{2,}");
 re!(re_dbl_comma, r",\s*,");
 re!(re_sp_punct, r"[ \t]+([,.;:!?])");
 re!(re_punct_dot, r"([,;:])\s*\.");
@@ -46,9 +46,8 @@ impl Engine {
             .is_some_and(|c| c.is_ascii_uppercase());
         if orig_upper {
             if let Some(i) = out.find(|c: char| c.is_ascii_alphabetic()) {
-                let c = out.as_bytes()[i].to_ascii_uppercase();
-                // safety: i indexes an ASCII byte found above
-                unsafe { out.as_bytes_mut()[i] = c };
+                let upper = out[i..i + 1].to_ascii_uppercase();
+                out.replace_range(i..i + 1, &upper);
             }
         }
         out
@@ -84,7 +83,7 @@ impl Engine {
         out.push_str(&s[last..]);
 
         // Cleanup artifacts, then recapitalize after sentence enders only.
-        let mut s = re_spaces().replace_all(&out, " ").into_owned();
+        let mut s = collapse_runs(&out);
         s = re_dbl_comma().replace_all(&s, ",").into_owned();
         s = re_sp_punct().replace_all(&s, "$1").into_owned();
         s = re_punct_dot().replace_all(&s, ".").into_owned();
@@ -94,6 +93,24 @@ impl Engine {
             })
             .into_owned()
     }
+}
+
+/// Collapse space runs left behind by deletions, mid-line only. Leading indent
+/// is markdown structure (nested lists, indented code) and two trailing spaces
+/// are a hard line break, so both survive. The TS pass ate them, see c012aab.
+fn collapse_runs(s: &str) -> String {
+    re_spaces()
+        .replace_all(s, |c: &Captures| {
+            let m = c.get(0).unwrap();
+            let line_start = s[..m.start()].chars().next_back().is_none_or(|c| c == '\n');
+            let line_end = s[m.end()..].chars().next().is_none_or(|c| c == '\n');
+            if line_start || line_end {
+                m.as_str().to_string()
+            } else {
+                " ".to_string()
+            }
+        })
+        .into_owned()
 }
 
 /// Preserve the ORIGINAL token's case shape (UPPER / Capitalized / lower).
@@ -106,12 +123,11 @@ fn preserve_case(src: &str, repl: &str) -> String {
         .first()
         .is_some_and(|b| b.is_ascii_uppercase())
     {
-        let mut r: String = repl.to_string();
-        if let Some(b) = r.as_bytes().first().copied() {
-            // safety: replacements are ASCII by pack convention
-            unsafe { r.as_bytes_mut()[0] = b.to_ascii_uppercase() };
-        }
-        return r;
+        let mut chars = repl.chars();
+        return match chars.next() {
+            Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
+            None => String::new(),
+        };
     }
     repl.to_string()
 }

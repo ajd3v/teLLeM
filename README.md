@@ -26,7 +26,8 @@ you can argue with is the only detection worth publishing.
 ## lint
 
 Rules live in TOML packs (`packs/base.toml` ships with the binary, extra
-packs load with `--pack` and can override by rule id). Lexical tells (T),
+packs load with `--pack` and can override by rule id). `--fail-on seasoned`
+exits 1 so lint can gate CI. Lexical tells (T),
 phrase tells (P), and structural tells (S, computed in code: uniform bullet
 openers, uniform sentence length, triadic overuse). Markdown code fences,
 inline code, and URLs are masked, tells in code are not tells.
@@ -36,6 +37,9 @@ inline code, and URLs are masked, tells in code are not tells.
 Deterministic rewrites keyed to rules: dashes to commas, numeric ranges to
 "to" (never a comma), tell-words to plain words with case and inflection
 preserved, filler phrases deleted with punctuation cleanup. No LLM anywhere.
+Markdown whitespace that carries meaning (list indent, hard line breaks)
+survives the cleanup pass. `fix -w` rewrites in place, because `fix f > f`
+truncates the file.
 
 CI-enforced guarantee: fixed output re-linted never gains total tell weight,
 and every finding from a rule fix claims to handle is gone. Structural tells
