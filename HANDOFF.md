@@ -23,7 +23,16 @@ session needs to start building without re-deriving context.
  needs an explicit config.externals entry because serverExternalPackages does
  not externalize workspace packages. The platform's own rules live in
  gainful packages/tellem/voice.toml, mirrored by tests/gainful_parity.rs here.
- NOT yet done: site widget in devaney-site (WASM), reviewer tell score line.
+ NOT yet done: reviewer tell score line in the platform packet receipt.
+- Integration 2 SHIPPED (2026-07-28): the "Tells" bench on devaney-site, wasm
+ running client-side. scripts/build-wasm.sh here builds it, vendors it into
+ that repo, and stamps the build hash into index.html. That stamp matters:
+ the site serves every non-HTML file immutable for a week, so without a
+ versioned URL a rules change reaches nobody for seven days.
+- Putting the engine's output on a page is the best rule-quality test found so
+ far. It immediately showed two word swaps producing broken English ("a many
+ of possibilities", "a sign to synergy"), now fixed by P042 and P043. Run the
+ bench against real prose before trusting a new swap rule.
 - who / harvest / mine (M3) not started.
 - Name: **teLLeM** (display + repo, github.com/ajd3v/teLLeM, created 2026-07-22
  as PRIVATE, flip to public at M1 publishable).
