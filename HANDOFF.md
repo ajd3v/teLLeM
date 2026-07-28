@@ -12,9 +12,18 @@ session needs to start building without re-deriving context.
  number: ~93 MiB/s single thread, README documents the gap to the 1 GB/s
  target), GitHub Actions CI green.
 - M2 bindings SHIPPED: tellem-wasm (lint_json + fix, wasm32 target checked
- in CI) and tellem-node (napi, deAi drop-in + lintJson, node parity test in
- CI). NOT yet done: gainful consuming tellem-node, site widget in
- devaney-site. Those are cross-repo changes, do them with the owner.
+ in CI) and tellem-node (napi, deAi drop-in + lintJson + setPack, node parity
+ test in CI).
+- Integration 1 SHIPPED (2026-07-28): gainful's deAi() calls tellem-node. The
+ addon is VENDORED at gainful packages/tellem/tellem.node (prebuilt, refreshed
+ by its update.sh), not built in CI. Its glibc floor is 2.34 vs 2.39 in the
+ playwright image, so the Dockerfile needed no rust. Two bundling constraints
+ that will bite again: tellem.ts and email.ts had to leave the
+ @gainful/shared barrel (client components import it), and @gainful/tellem
+ needs an explicit config.externals entry because serverExternalPackages does
+ not externalize workspace packages. The platform's own rules live in
+ gainful packages/tellem/voice.toml, mirrored by tests/gainful_parity.rs here.
+ NOT yet done: site widget in devaney-site (WASM), reviewer tell score line.
 - who / harvest / mine (M3) not started.
 - Name: **teLLeM** (display + repo, github.com/ajd3v/teLLeM, created 2026-07-22
  as PRIVATE, flip to public at M1 publishable).
