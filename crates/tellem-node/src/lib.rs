@@ -7,9 +7,27 @@ extern crate napi_derive;
 use std::sync::OnceLock;
 use tellem_core::{Engine, Pack};
 
+static ENGINE: OnceLock<Engine> = OnceLock::new();
+
 fn engine() -> &'static Engine {
-    static E: OnceLock<Engine> = OnceLock::new();
-    E.get_or_init(|| Engine::from_packs(&[Pack::parse(tellem_core::BASE_PACK).unwrap()]).unwrap())
+    ENGINE.get_or_init(|| {
+        Engine::from_packs(&[Pack::parse(tellem_core::BASE_PACK).unwrap()]).unwrap()
+    })
+}
+
+/// Load an extra pack on top of base (rule ids override). Consumers with their
+/// own voice rules call this once at import time, before any deAi call.
+#[napi(js_name = "setPack")]
+pub fn set_pack(toml_src: String) -> napi::Result<()> {
+    let reason = |e: tellem_core::Error| napi::Error::from_reason(e.to_string());
+    let packs = [
+        Pack::parse(tellem_core::BASE_PACK).map_err(reason)?,
+        Pack::parse(&toml_src).map_err(reason)?,
+    ];
+    let engine = Engine::from_packs(&packs).map_err(reason)?;
+    ENGINE.set(engine).map_err(|_| {
+        napi::Error::from_reason("setPack must be called once, before the first deAi or lintJson")
+    })
 }
 
 /// Deterministic de-AI rewrite (drop-in for the TS deAi()).

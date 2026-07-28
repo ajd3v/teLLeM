@@ -129,7 +129,10 @@ fn markdown_whitespace_survives() {
     let e = eng();
     let md = "- a\n    - nested delve item\n";
     assert_eq!(e.fix(md), "- a\n    - nested look item\n");
-    assert_eq!(e.fix("a hard break  \nnext line"), "a hard break  \nnext line");
+    assert_eq!(
+        e.fix("a hard break  \nnext line"),
+        "a hard break  \nnext line"
+    );
     assert_eq!(e.fix("collapsed  here"), "collapsed here");
 }
 

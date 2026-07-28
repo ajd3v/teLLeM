@@ -15,9 +15,14 @@ macro_rules! re {
     };
 }
 
-// Numeric ranges FIRST: a dash between numbers becomes "to", never a comma.
-// Regression: the TS deAi pass turned "2007—2024" into "2007, 2024" in prod.
-re!(re_num_range, r"(\d)\s*[\u{2013}\u{2014}]\s*(\d)");
+// Ranges FIRST: a dash after a number becomes "to", never a comma. Prod
+// regression: the TS pass turned "2007—2024" into "2007, 2024". Resume date
+// ranges end in a month or Present, not just a digit, so those count too
+// ("March 2021 – March 2026", "June 2026 – Present").
+re!(
+    re_num_range,
+    r"(\d)\s*[\u{2013}\u{2014}]\s*(\d|Present|Current|Now|[A-Z][a-z]+\.? \d)"
+);
 re!(re_em_dash, r"\s*\u{2014}\s*");
 re!(re_sp_en_dash, r" \u{2013} ");
 re!(re_word, r"[A-Za-z]+");
