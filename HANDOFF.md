@@ -23,7 +23,9 @@ session needs to start building without re-deriving context.
  needs an explicit config.externals entry because serverExternalPackages does
  not externalize workspace packages. The platform's own rules live in
  gainful packages/tellem/voice.toml, mirrored by tests/gainful_parity.rs here.
- NOT yet done: reviewer tell score line in the platform packet receipt.
+ Integration 3 SHIPPED (2026-07-28): the reviewer agent gets a deterministic
+ tell scan before it judges tone, and PacketTells lands on cv_versions.review
+ for the apply-room receipt. All three integration targets are done.
 - Integration 2 SHIPPED (2026-07-28): the "Tells" bench on devaney-site, wasm
  running client-side. scripts/build-wasm.sh here builds it, vendors it into
  that repo, and stamps the build hash into index.html. That stamp matters:
