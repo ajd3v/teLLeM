@@ -158,7 +158,9 @@ fn lint_reports_receipts() {
     let e = eng();
     let r = e.lint("We delve into a rich tapestry — a testament to synergy.");
     let ids: Vec<&str> = r.findings.iter().map(|f| f.rule_id.as_str()).collect();
-    for id in ["T013", "T033", "T001", "T024", "T036"] {
+    // P043 not T024: the phrase rule wins the leftmost-longest match on
+    // "a testament to", which is what keeps fix from writing "a sign to".
+    for id in ["T013", "T033", "T001", "P043", "T036"] {
         assert!(ids.contains(&id), "missing {id} in {ids:?}");
     }
     assert!(r.findings.iter().all(|f| !f.rationale.is_empty()));
@@ -209,4 +211,18 @@ fn fix_monotonic_and_complete() {
             "fixable findings survived fix: {leftover:?}\nfixed: {fixed}"
         );
     }
+}
+
+#[test]
+fn phrase_rules_beat_the_bare_word_swap() {
+    // The site widget made these visible: "a myriad of X" swapped word-by-word
+    // reads "a many of X", and "a testament to X" reads "a sign to X".
+    let e = eng();
+    assert_eq!(
+        e.fix("It showcases a myriad of possibilities, a testament to synergy."),
+        "It shows many possibilities, a sign of synergy."
+    );
+    assert_eq!(e.fix("Myriads of tools"), "Many tools");
+    // the bare word still swaps where no construction applies
+    assert_eq!(e.fix("a myriad landscape"), "a many landscape");
 }

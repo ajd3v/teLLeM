@@ -728,3 +728,21 @@ kind = "regex"
 pattern = '(?i)\b(?:paid|actual|real|genuine|proven|legitimate)\s+(?:experience|work|results?|skills?)\b'
 weight = 0.4
 rationale = "qualifiers that defend a claim weaken it, state the claim plainly"
+
+[[rules]]
+id = "P042"
+name = "a-myriad-of"
+kind = "phrase"
+patterns = ["a myriad of", "myriads of"]
+replace = "many"
+weight = 0.8
+rationale = "a myriad of is the model's plural, and the bare swap to many breaks the article"
+
+[[rules]]
+id = "P043"
+name = "a-testament-to"
+kind = "phrase"
+patterns = ["a testament to", "is testament to"]
+replace = "a sign of"
+weight = 1.0
+rationale = "a testament to is a canonical model formula, and sign takes of, not to"
