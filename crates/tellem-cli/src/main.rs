@@ -1,4 +1,5 @@
 mod attribute_cmd;
+mod harvest;
 
 use clap::{Parser, Subcommand, ValueEnum};
 use std::io::Read;
@@ -58,6 +59,23 @@ enum Cmd {
         margin: f32,
         #[arg(long)]
         json: bool,
+    },
+    /// Collect model output into the corpus. Resumable, and paced on purpose.
+    Harvest {
+        /// TOML listing the endpoint and the models to sample
+        config: PathBuf,
+        /// JSONL battery of {prompt_id, prompt}
+        #[arg(long, default_value = "corpora/prompts.jsonl")]
+        prompts: PathBuf,
+        /// Append-only corpus. Existing samples are skipped, so restarts are free.
+        #[arg(long, default_value = "corpora/harvest.jsonl")]
+        corpus: PathBuf,
+        /// Timestamp recorded on each sample (RFC3339). Defaults to unset.
+        #[arg(long, default_value = "")]
+        at: String,
+        /// Print what would be asked without calling anything
+        #[arg(long)]
+        dry_run: bool,
     },
     /// Held-out eval: derive the margin that holds the precision floor
     Eval {
@@ -146,6 +164,13 @@ fn run() -> Result<(), tellem_core::Error> {
             margin,
             json,
         } => attribute_cmd::who_cmd(file, &catalog, margin, json)?,
+        Cmd::Harvest {
+            config,
+            prompts,
+            corpus,
+            at,
+            dry_run,
+        } => harvest::harvest_cmd(&config, &prompts, &corpus, &at, dry_run)?,
         Cmd::Eval {
             corpus,
             top_k,

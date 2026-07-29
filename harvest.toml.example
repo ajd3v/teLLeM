@@ -1,0 +1,52 @@
+# Harvest battery for the local gateway. Copy to harvest.toml and edit.
+#
+# Pacing: 6 seconds between requests, 120 per run. Six families at 300 samples
+# is 1800 requests, so about 15 runs and three hours of wall clock spread over
+# however many days you like. Point cron at it, or run it when you remember.
+# The corpus is append-only and every start skips what it already has, so
+# interrupting a run costs nothing.
+#
+# `family` is the catalog label. Versions and reasoning-effort variants
+# collapse into one family until the eval shows they actually separate.
+
+base_url = "http://127.0.0.1:20128/v1"
+api_key = ""
+delay_secs = 6.0
+per_run = 120
+strikes = 3
+
+[[models]]
+family = "gpt-5"
+provider = "openai"
+model = "cx/gpt-5.5"
+target = 300
+
+[[models]]
+family = "claude-4"
+provider = "anthropic"
+model = "ag/claude-sonnet-4-6"
+target = 300
+
+[[models]]
+family = "gemini-3"
+provider = "google"
+model = "gc/gemini-3-pro-preview"
+target = 300
+
+[[models]]
+family = "grok-4"
+provider = "xai"
+model = "xai/grok-4"
+target = 300
+
+[[models]]
+family = "gpt-oss"
+provider = "openweight"
+model = "ag/gpt-oss-120b-medium"
+target = 300
+
+[[models]]
+family = "deepseek"
+provider = "deepseek"
+model = "OpenCodeDeepSeek"
+target = 300
