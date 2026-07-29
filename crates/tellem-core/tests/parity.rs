@@ -226,3 +226,34 @@ fn phrase_rules_beat_the_bare_word_swap() {
     // the bare word still swaps where no construction applies
     assert_eq!(e.fix("a myriad landscape"), "a many landscape");
 }
+
+#[test]
+fn html_markup_is_not_prose() {
+    // The site is the HTML consumer the mask.rs note was waiting for. Tags and
+    // attributes are markup, script and style bodies are code, and <code> is
+    // masked for the same reason backticks are: naming a rule is a mention.
+    let e = eng();
+    let page = r#"<p class="lede delve showcase">We look at it.</p>
+<script>const leverage = "delve";</script>
+<style>.x { content: "utilize"; }</style>
+<p>The word <code>delve</code> is a rule, not a habit.</p>"#;
+    let r = e.lint(page);
+    assert_eq!(
+        r.findings.len(),
+        0,
+        "markup read as prose: {:?}",
+        r.findings
+    );
+
+    // Prose in the same file still gets read.
+    let mixed = "<p>We delve into the tapestry.</p>";
+    assert!(
+        e.lint(mixed).findings.iter().any(|f| f.rule_id == "T013"),
+        "prose inside tags was skipped"
+    );
+    // and fix leaves the markup alone
+    assert_eq!(
+        e.fix(r#"<a href="/x" class="leverage">We leverage it.</a>"#),
+        r#"<a href="/x" class="leverage">We use it.</a>"#
+    );
+}

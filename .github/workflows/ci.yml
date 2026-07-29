@@ -15,6 +15,10 @@ jobs:
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
       - run: cargo bench --no-run
+      # The tool reads its own public copy. A lint tool whose marketing page
+      # trips its own rules would be the funniest possible bug to ship.
+      - run: cargo run --release -q -- lint README.md --fail-on seasoned
+      - run: cargo run --release -q -- lint site/index.html --fail-on seasoned
       - run: rustup target add wasm32-unknown-unknown && cargo check -p tellem-wasm --target wasm32-unknown-unknown
       - run: cargo build --release -p tellem-node
       - run: cp target/release/libtellem_node.so crates/tellem-node/tellem.node && node crates/tellem-node/parity.test.mjs

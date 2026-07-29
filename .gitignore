@@ -14,3 +14,6 @@ catalog.toml
 site/tellem/tellem_wasm_bg.wasm
 site/tellem/tellem_wasm.js
 site/tellem/catalog.toml
+
+# Local harvest config may hold a key.
+harvest.toml
