@@ -42,10 +42,11 @@ session needs to start building without re-deriving context.
  plus MAGE human text as the rejection class. Naive Bayes was the spec's
  choice and could not reach the floor (72.7%), logistic regression can and is
  still a dot product, so receipts still print.
- The harvester IS written and tested against a mock, see harvest.toml.example.
- It cannot run until the gateway is re-authed, see below. Once it can:
-   tellem harvest harvest.toml
- is safe to interrupt and safe to re-run, so put it on a cron slice.
+ The harvester works and is RUNNING against the live gateway as of
+ 2026-07-28. `tellem harvest harvest.toml` is safe to interrupt and safe to
+ re-run, so put it on a cron slice. Corpus lands in corpora/harvest.jsonl.
+ Mine a catalog from whatever exists at any point, no need to wait for the
+ full target.
 - site/ is tellem.gainful.work, watercolour, all three verbs client side.
  Needs a DNS record before deploy/push.sh will do anything.
 - GATEWAY, corrected 2026-07-28 after actually retesting. FOUR of six families
