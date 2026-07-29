@@ -1,16 +1,16 @@
 # Harvest battery for the local gateway. Copy to harvest.toml and edit.
 #
-# Pacing: 6 seconds between requests, 120 per run. Four working families at 300
-# samples is 1200 requests, roughly two hours of wall clock spread over as many
-# days as you like. The corpus is append-only and every start skips what it
-# already has, so interrupting a run costs nothing and cron is safe.
+# Pacing: 6 seconds between requests, and a 429 is waited out rather than
+# counted as a failure, because the gateway rate limits under sustained load.
+# The corpus is append-only and every start skips what it already has, so
+# interrupting a run costs nothing and cron is safe. Raise per_run for a long
+# unattended pass.
 #
-# `family` is the catalog label. Versions and reasoning-effort variants collapse
-# into one family until the eval shows they actually separate.
+# `family` is the catalog label. Versions and reasoning-effort variants
+# collapse into one family until the eval shows they actually separate.
 #
-# Model ids are chosen so the endpoint reports a SPECIFIC upstream. Several
-# aliases answer with "gemini-default" or "gemini-pro-default", which cannot be
-# audited later, so they make poor catalog labels even though they work.
+# Model ids are picked so the endpoint reports a SPECIFIC upstream. Several
+# aliases answer as "gemini-default", which cannot be audited later.
 # Verified working 2026-07-28.
 
 base_url = "http://127.0.0.1:20128/v1"
@@ -18,44 +18,58 @@ api_key = ""
 delay_secs = 6.0
 per_run = 120
 strikes = 3
+backoff_secs = 60.0
+retries = 4
 
 [[models]]
 family = "claude-4"
 provider = "anthropic"
-model = "ag/claude-sonnet-4-6"   # upstream reports claude-sonnet-4-6
+model = "ag/claude-sonnet-4-6"
 target = 300
 
 [[models]]
 family = "gemini-3"
 provider = "google"
-model = "ag/gemini-3-flash"      # upstream reports gemini-3-flash
+model = "ag/gemini-3-flash"
+target = 300
+
+[[models]]
+family = "gpt-5"
+provider = "openai"
+model = "cx/gpt-5.6-sol"
+target = 300
+
+[[models]]
+family = "deepseek-v4"
+provider = "deepseek"
+model = "nvidia/deepseek-ai/deepseek-v4-pro"
+target = 300
+
+[[models]]
+family = "glm"
+provider = "zhipu"
+model = "nvidia/z-ai/glm-5.2"
+target = 300
+
+[[models]]
+family = "minimax"
+provider = "minimax"
+model = "nvidia/minimaxai/minimax-m3"
 target = 300
 
 [[models]]
 family = "gpt-oss"
 provider = "openweight"
-model = "ag/gpt-oss-120b-medium" # upstream reports gpt-oss-120b-medium
+model = "ag/gpt-oss-120b-medium"
 target = 300
 
-# The free flash tier, not the flagship. It returns empty bodies often enough
-# that `strikes` will retire it early on a bad day, which is fine, the next run
-# picks up where this one stopped.
+# Not a catalog family. This is the SAME model the 2024 reference corpus used,
+# so harvesting it here and asking a classifier to separate our samples from
+# theirs measures whether our harvest is comparable to theirs at all. If it can
+# tell them apart, harvest parameters carry their own fingerprint and every
+# cross-corpus number in this repo needs that caveat.
 [[models]]
-family = "deepseek-flash"
-provider = "deepseek"
-model = "OpenCodeDeepSeek"       # upstream reports deepseek-v4-flash-free
-target = 300
-
-# Blocked on credentials as of 2026-07-28, uncomment once re-authed:
-#
-# [[models]]
-# family = "gpt-5"
-# provider = "openai"
-# model = "cx/gpt-5.5"           # 401, authentication token is expired
-# target = 300
-#
-# [[models]]
-# family = "grok-4"
-# provider = "xai"
-# model = "xai/grok-4"           # 403, OAuth2 access token could not be verified
-# target = 300
+family = "gpt-4o-replication"
+provider = "openai"
+model = "gh/gpt-4o-2024-08-06"
+target = 220
