@@ -106,7 +106,7 @@ pub fn train(
 impl Catalog {
     /// Feature name -> column, in the catalog's own stable order.
     pub fn index(&self) -> BTreeMap<String, usize> {
-        self.idf
+        self.features
             .keys()
             .enumerate()
             .map(|(i, k)| (k.clone(), i))
@@ -127,16 +127,14 @@ pub fn fit(samples: &[(String, String)], top_k: usize, epochs: usize) -> Catalog
     fit_once(&mut catalog, samples, epochs);
     // Five significant figures. An f32 serialises as its f64 expansion
     // otherwise, which triples the file and makes every diff unreadable.
-    for v in catalog.idf.values_mut() {
-        *v = round5(*v);
+    for b in &mut catalog.bias {
+        *b = round5(*b);
     }
-    for fp in &mut catalog.fingerprints {
-        fp.bias = round5(fp.bias);
-        for f in fp.features.values_mut() {
-            f.weight = round5(f.weight);
-            f.z = round5(f.z);
-            f.rate = round5(f.rate);
-            f.baseline = round5(f.baseline);
+    for row in catalog.features.values_mut() {
+        row.idf = round5(row.idf);
+        row.base = round5(row.base);
+        for x in row.rate.iter_mut().chain(row.w.iter_mut()) {
+            *x = round5(*x);
         }
     }
     catalog
@@ -148,12 +146,8 @@ fn round5(x: f32) -> f32 {
 
 fn fit_once(catalog: &mut Catalog, samples: &[(String, String)], epochs: usize) {
     let index = catalog.index();
-    let idf: Vec<f32> = catalog.idf.values().copied().collect();
-    let classes: Vec<String> = catalog
-        .fingerprints
-        .iter()
-        .map(|f| f.family.clone())
-        .collect();
+    let idf: Vec<f32> = catalog.features.values().map(|r| r.idf).collect();
+    let classes: Vec<String> = catalog.families.clone();
 
     let docs: Vec<(usize, Vec<(usize, f32)>)> = samples
         .iter()
@@ -164,13 +158,10 @@ fn fit_once(catalog: &mut Catalog, samples: &[(String, String)], epochs: usize) 
         .collect();
 
     let trained = train(&docs, index.len(), classes.len(), epochs, 0.5, 1e-6);
-    let names: Vec<String> = catalog.idf.keys().cloned().collect();
-    for (c, fp) in catalog.fingerprints.iter_mut().enumerate() {
-        fp.bias = trained.bias[c];
-        for (i, name) in names.iter().enumerate() {
-            if let Some(f) = fp.features.get_mut(name) {
-                f.weight = trained.weights[c][i];
-            }
+    catalog.bias = trained.bias;
+    for (i, row) in catalog.features.values_mut().enumerate() {
+        for c in 0..classes.len() {
+            row.w[c] = trained.weights[c][i];
         }
     }
 }

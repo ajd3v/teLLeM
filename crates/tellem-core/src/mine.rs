@@ -1,14 +1,16 @@
 //! mine: learn a per-family fingerprint from a labelled corpus.
 //!
-//! Features are word rates, selected by log-odds with an informative Dirichlet
-//! prior (Monroe, Colaresi and Quinn 2008, the standard corpus-linguistics move
-//! for "which words distinguish group A from the pooled background"). The z
-//! score decides which words are worth keeping and it is also what a receipt
-//! prints. Scoring itself is multinomial naive Bayes over the kept vocabulary,
-//! chosen because every token's contribution can be printed. That constraint is
-//! the point of the tool, so it outranks any accuracy a black box would buy.
+//! Features are selected by log-odds with an informative Dirichlet prior
+//! (Monroe, Colaresi and Quinn 2008, the standard corpus-linguistics move for
+//! "which words distinguish group A from the pooled background"). Selection is
+//! all the z score is for, so it is not stored: what a receipt prints is the
+//! family's rate against the corpus baseline, which reads plainly.
+//!
+//! The catalog is one row per feature with a column per family, so a reader can
+//! compare all of them side by side. That layout also stores each feature name
+//! once rather than once per family plus once for the idf table.
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use serde::{Deserialize, Serialize};
 
@@ -18,57 +20,38 @@ use serde::{Deserialize, Serialize};
 /// shown: on 30k human texts that produced a 45% false positive rate.
 pub const UNMATCHED: &str = "unmatched";
 
-/// One labelled corpus sample.
-pub struct Sample<'a> {
-    pub family: &'a str,
-    pub text: &'a str,
-}
-
-/// What `mine` writes per family. Human-readable and diffable on purpose: the
-/// catalog is the deliverable, and it stays useful when the classifier abstains.
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Fingerprint {
-    pub family: String,
-    pub samples: usize,
-    pub tokens: u64,
-    /// logistic regression intercept for this family
-    #[serde(default)]
-    pub bias: f32,
-    /// word -> evidence, sorted by word so a re-mine produces a clean diff
-    pub features: BTreeMap<String, Feature>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Copy)]
-pub struct Feature {
-    /// logistic regression coefficient. Contribution to a call is weight*value,
-    /// which is what a receipt prints.
-    #[serde(default)]
-    pub weight: f32,
-    /// log-odds z vs the pooled background. Selection criterion and receipt.
-    pub z: f32,
-    /// occurrences per 1000 tokens in this family
-    pub rate: f32,
+/// One row of the catalog: a feature, and what each family does with it.
+/// `w` and `rate` are parallel to `Catalog::families`.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Row {
+    /// inverse document frequency, for the tf-idf vector
+    pub idf: f32,
     /// occurrences per 1000 tokens across the pooled corpus
-    pub baseline: f32,
+    pub base: f32,
+    /// occurrences per 1000 tokens per family
+    pub rate: Vec<f32>,
+    /// logistic regression coefficient per family. A feature's contribution to
+    /// a call is weight times value, which is what a receipt prints.
+    #[serde(default)]
+    pub w: Vec<f32>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Catalog {
     /// Corpus provenance, printed by `who` so a reader knows the closed set.
     pub source: String,
-    /// Inverse document frequency per vocabulary feature. Defines the vocabulary
-    /// and its column order for scoring.
+    /// Column order for every per-family array in the catalog.
+    pub families: Vec<String>,
+    pub samples: Vec<usize>,
+    /// logistic regression intercept per family
     #[serde(default)]
-    pub idf: BTreeMap<String, f32>,
-    pub fingerprints: Vec<Fingerprint>,
+    pub bias: Vec<f32>,
+    pub features: BTreeMap<String, Row>,
 }
 
 impl Catalog {
     pub fn families(&self) -> Vec<&str> {
-        self.fingerprints
-            .iter()
-            .map(|f| f.family.as_str())
-            .collect()
+        self.families.iter().map(String::as_str).collect()
     }
 }
 
@@ -134,22 +117,12 @@ struct Counts {
     samples: usize,
 }
 
-/// Mine a catalog. `top_k` features are kept per family, by |z|.
-pub fn mine(samples: impl IntoIterator<Item = Sample<'static>>, top_k: usize) -> Catalog {
-    mine_from(
-        samples
-            .into_iter()
-            .map(|s| (s.family.to_string(), s.text.to_string())),
-        top_k,
-    )
-}
-
-/// Same, over owned pairs, so a caller can stream a corpus without lifetimes.
+/// Mine a catalog. Each family nominates `top_k` features by |z|.
 pub fn mine_from(samples: impl IntoIterator<Item = (String, String)>, top_k: usize) -> Catalog {
     let mut per_family: BTreeMap<String, Counts> = BTreeMap::new();
     let mut pooled = Counts::default();
-
     let mut doc_freq: HashMap<String, u64> = HashMap::new();
+
     for (family, text) in samples {
         let c = per_family.entry(family).or_default();
         c.samples += 1;
@@ -161,7 +134,7 @@ pub fn mine_from(samples: impl IntoIterator<Item = (String, String)>, top_k: usi
             *c.by_word.entry(w.clone()).or_insert(0) += 1;
             *pooled.by_word.entry(w.clone()).or_insert(0) += 1;
         }
-        for w in toks.into_iter().collect::<std::collections::BTreeSet<_>>() {
+        for w in toks.into_iter().collect::<BTreeSet<_>>() {
             *doc_freq.entry(w).or_insert(0) += 1;
         }
     }
@@ -171,7 +144,6 @@ pub fn mine_from(samples: impl IntoIterator<Item = (String, String)>, top_k: usi
     // failure mode a plain frequency ratio has.
     let alpha0 = 1000.0_f64;
     let n = pooled.total as f64;
-
     let z_of = |c: &Counts, word: &str, y_iw: u64| -> f64 {
         let ni = c.total as f64;
         let y_w = pooled.by_word[word] as f64;
@@ -182,66 +154,50 @@ pub fn mine_from(samples: impl IntoIterator<Item = (String, String)>, top_k: usi
         delta / (1.0 / yi + 1.0 / yb).sqrt()
     };
 
-    // Each family nominates its top_k most distinctive words, and the catalog
-    // vocabulary is the UNION. Every fingerprint then carries a probability for
-    // every vocabulary word, including the ones it rarely uses, because "this
+    // The vocabulary is the UNION of what each family nominates, because "this
     // family almost never says moreover" is evidence too. Scoring only the
     // intersection would throw away nearly everything.
-    let mut vocab: BTreeMap<String, ()> = BTreeMap::new();
+    let mut vocab: BTreeSet<String> = BTreeSet::new();
     for c in per_family.values() {
         let mut scored: Vec<(f64, &String)> = c
             .by_word
             .iter()
-            // A word seen a handful of times is noise, not a fingerprint.
+            // A feature seen a handful of times is noise, not a fingerprint.
             .filter(|(_, &y)| y >= 5)
             .map(|(word, &y)| (z_of(c, word, y).abs(), word))
             .collect();
         scored.sort_by(|a, b| b.0.total_cmp(&a.0));
-        for (_, w) in scored.into_iter().take(top_k) {
-            vocab.insert(w.clone(), ());
-        }
+        vocab.extend(scored.into_iter().take(top_k).map(|(_, w)| w.clone()));
     }
 
-    let fingerprints = per_family
-        .iter()
-        .map(|(family, c)| {
-            let ni = c.total as f64;
-            let features = vocab
-                .keys()
-                .map(|word| {
-                    let y_iw = c.by_word.get(word).copied().unwrap_or(0);
-                    let y_w = pooled.by_word[word] as f64;
-                    let feature = Feature {
-                        weight: 0.0,
-                        z: z_of(c, word, y_iw) as f32,
-                        rate: (y_iw as f64 / ni * 1000.0) as f32,
-                        baseline: (y_w / n * 1000.0) as f32,
-                    };
-                    (word.clone(), feature)
-                })
-                .collect();
-            Fingerprint {
-                family: family.clone(),
-                samples: c.samples,
-                tokens: c.total,
-                bias: 0.0,
-                features,
-            }
-        })
-        .collect();
-
     let n_docs = pooled.samples as f32;
-    let idf = vocab
-        .keys()
-        .map(|w| {
-            let df = doc_freq.get(w).copied().unwrap_or(0) as f32;
-            (w.clone(), ((1.0 + n_docs) / (1.0 + df)).ln() + 1.0)
+    let families: Vec<String> = per_family.keys().cloned().collect();
+    let features = vocab
+        .into_iter()
+        .map(|word| {
+            let y_w = pooled.by_word[&word] as f64;
+            let df = doc_freq.get(&word).copied().unwrap_or(0) as f32;
+            let row = Row {
+                idf: ((1.0 + n_docs) / (1.0 + df)).ln() + 1.0,
+                base: (y_w / n * 1000.0) as f32,
+                rate: per_family
+                    .values()
+                    .map(|c| {
+                        let y = c.by_word.get(&word).copied().unwrap_or(0) as f64;
+                        (y / c.total as f64 * 1000.0) as f32
+                    })
+                    .collect(),
+                w: vec![0.0; families.len()],
+            };
+            (word, row)
         })
         .collect();
 
     Catalog {
         source: String::new(),
-        idf,
-        fingerprints,
+        samples: per_family.values().map(|c| c.samples).collect(),
+        families,
+        bias: vec![0.0; per_family.len()],
+        features,
     }
 }

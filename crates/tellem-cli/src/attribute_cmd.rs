@@ -58,7 +58,7 @@ pub fn mine_cmd(corpus: &Path, out: &Path, top_k: usize, epochs: usize) -> Resul
     std::fs::write(out, toml::to_string(&catalog)?)?;
     println!(
         "mined {} families from {} samples -> {}",
-        catalog.fingerprints.len(),
+        catalog.families.len(),
         records.len(),
         out.display()
     );
@@ -143,11 +143,8 @@ pub fn eval_cmd(
         .map(|r| (r.family.clone(), r.text.clone()))
         .collect();
     let catalog = fit(&train_samples, top_k, epochs);
-    for f in &catalog.fingerprints {
-        println!(
-            "  {:<12} {:>6} samples, {:>9} tokens",
-            f.family, f.samples, f.tokens
-        );
+    for (f, n) in catalog.families.iter().zip(&catalog.samples) {
+        println!("  {f:<12} {n:>6} samples");
     }
 
     // Score once, then sweep the posterior gap.

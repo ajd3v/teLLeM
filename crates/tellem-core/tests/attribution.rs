@@ -79,12 +79,10 @@ fn fitting_is_deterministic() {
     // Same corpus in, same catalog out, or a published confusion matrix means
     // nothing and a catalog diff is noise.
     let (a, b) = (fit(&corpus(), 200, 8), fit(&corpus(), 200, 8));
-    assert_eq!(a.idf.len(), b.idf.len());
-    for (x, y) in a.fingerprints.iter().zip(&b.fingerprints) {
-        assert_eq!(x.bias, y.bias);
-        for (k, v) in &x.features {
-            assert_eq!(v.weight, y.features[k].weight, "{k} drifted between fits");
-        }
+    assert_eq!(a.features.len(), b.features.len());
+    assert_eq!(a.bias, b.bias);
+    for (k, row) in &a.features {
+        assert_eq!(row.w, b.features[k].w, "{k} drifted between fits");
     }
 }
 

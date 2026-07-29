@@ -51,17 +51,16 @@ impl Catalog {
     /// `min_confidence` and enough features matched to mean anything.
     pub fn who(&self, text: &str, min_confidence: f32, min_matched: usize) -> Attribution {
         let index = self.index();
-        let idf: Vec<f32> = self.idf.values().copied().collect();
+        let idf: Vec<f32> = self.features.values().map(|r| r.idf).collect();
         let x = vectorize(text, &index, &idf);
-        let names: Vec<&String> = self.idf.keys().collect();
+        let rows: Vec<&crate::mine::Row> = self.features.values().collect();
+        let names: Vec<&String> = self.features.keys().collect();
 
-        let mut scores: Vec<f32> = self
-            .fingerprints
-            .iter()
-            .map(|f| {
-                f.bias
+        let mut scores: Vec<f32> = (0..self.families.len())
+            .map(|c| {
+                self.bias.get(c).copied().unwrap_or(0.0)
                     + x.iter()
-                        .map(|&(i, v)| f.features.get(names[i]).map_or(0.0, |c| c.weight) * v)
+                        .map(|&(i, v)| rows[i].w.get(c).copied().unwrap_or(0.0) * v)
                         .sum::<f32>()
             })
             .collect();
@@ -73,14 +72,14 @@ impl Catalog {
             sum += *s;
         }
         let mut ranked: Vec<(usize, Candidate)> = self
-            .fingerprints
+            .families
             .iter()
             .enumerate()
-            .map(|(i, f)| {
+            .map(|(i, family)| {
                 (
                     i,
                     Candidate {
-                        family: f.family.clone(),
+                        family: family.clone(),
                         probability: if sum > 0.0 { scores[i] / sum } else { 0.0 },
                     },
                 )
@@ -100,7 +99,9 @@ impl Catalog {
             .then(|| ranked[0].1.family.clone());
 
         let receipts = match (&call, ranked.len()) {
-            (Some(_), n) if n >= 2 => self.receipts_for(ranked[0].0, ranked[1].0, &x, &names),
+            (Some(_), n) if n >= 2 => {
+                self.receipts_for(ranked[0].0, ranked[1].0, &x, &names, &rows)
+            }
             _ => Vec::new(),
         };
 
@@ -120,23 +121,23 @@ impl Catalog {
         runner: usize,
         x: &[(usize, f32)],
         names: &[&String],
+        rows: &[&crate::mine::Row],
     ) -> Vec<Receipt> {
-        let (w, r) = (&self.fingerprints[winner], &self.fingerprints[runner]);
-        let mut rows: Vec<Receipt> = x
+        let mut out: Vec<Receipt> = x
             .iter()
-            .filter_map(|&(i, v)| {
-                let wf = w.features.get(names[i])?;
-                let rf = r.features.get(names[i])?;
-                Some(Receipt {
+            .map(|&(i, v)| {
+                let row = rows[i];
+                let pull = |c: usize| row.w.get(c).copied().unwrap_or(0.0);
+                Receipt {
                     feature: names[i].clone(),
-                    contribution: (wf.weight - rf.weight) * v,
-                    rate: wf.rate,
-                    baseline: wf.baseline,
-                })
+                    contribution: (pull(winner) - pull(runner)) * v,
+                    rate: row.rate.get(winner).copied().unwrap_or(0.0),
+                    baseline: row.base,
+                }
             })
             .collect();
-        rows.sort_by(|a, b| b.contribution.total_cmp(&a.contribution));
-        rows.truncate(8);
-        rows
+        out.sort_by(|a, b| b.contribution.total_cmp(&a.contribution));
+        out.truncate(8);
+        out
     }
 }
