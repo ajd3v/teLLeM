@@ -1,0 +1,410 @@
+/* teLLeM. One pigment on paper.
+   Washes are SVG turbulence over soft gradients, which is how watercolour
+   actually behaves: pigment settles unevenly and the edge blooms. Grain sits on
+   a fixed pointer-events-none layer so it never repaints during scroll. */
+
+:root {
+  --paper: #f6f3ec;
+  --paper-deep: #efeae0;
+  --ink: #16181f;
+  --ink-soft: #4e5364;
+  --ink-faint: #878ca0;
+  --pigment: #2f4079;
+  --pigment-wet: #4a5da3;
+  --rule: #d8d2c4;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --measure: 62ch;
+  --edge: 2px;
+  color-scheme: light dark;
+}
+
+:root[data-theme='dark'] {
+  --paper: #101219;
+  --paper-deep: #171a24;
+  --ink: #e9e6dd;
+  --ink-soft: #a8adbe;
+  --ink-faint: #6d7387;
+  --pigment: #93a7ef;
+  --pigment-wet: #b3c2f7;
+  --rule: #2a2f3d;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- the washes ---------- */
+
+.washes {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.wash {
+  position: absolute;
+  border-radius: 50%;
+  filter: url(#bleed) blur(14px);
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+}
+:root[data-theme='dark'] .wash { mix-blend-mode: screen; opacity: 0.34; }
+
+.wash.a {
+  width: 62vw; height: 62vw; top: -22vw; right: -14vw;
+  background: radial-gradient(circle at 42% 38%, var(--pigment-wet) 0%, rgba(74, 93, 163, 0.42) 38%, transparent 68%);
+}
+.wash.b {
+  width: 48vw; height: 48vw; top: 78vh; left: -16vw;
+  background: radial-gradient(circle at 58% 44%, var(--pigment) 0%, rgba(47, 64, 121, 0.3) 42%, transparent 70%);
+  opacity: 0.32;
+}
+.wash.c {
+  width: 40vw; height: 40vw; top: 188vh; right: -10vw;
+  background: radial-gradient(circle at 50% 50%, var(--pigment-wet) 0%, rgba(74, 93, 163, 0.26) 44%, transparent 72%);
+  opacity: 0.26;
+}
+
+/* Paper grain. Fixed layer, never on a scrolling container. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+:root[data-theme='dark'] .grain { mix-blend-mode: overlay; opacity: 0.2; }
+
+/* ---------- shell ---------- */
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 clamp(1.1rem, 4vw, 3rem);
+}
+
+header.site {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 72px;
+}
+.brand {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 500;
+}
+.brand b { color: var(--pigment); font-weight: 500; }
+nav.site { display: flex; align-items: center; gap: 1.35rem; }
+nav.site a {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+nav.site a:hover { color: var(--pigment); }
+.theme {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--edge);
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+}
+.theme:hover { color: var(--pigment); border-color: var(--pigment); }
+
+section { padding: clamp(4rem, 9vw, 7.5rem) 0; }
+section > h2 {
+  font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  max-width: 20ch;
+}
+.lede { color: var(--ink-soft); max-width: var(--measure); margin: 0 0 2.5rem; }
+
+/* ---------- hero ---------- */
+
+/* Sized to its content, not to the viewport. A hero with a fixed 100dvh floor
+   and centred content leaves a dead band above and below on tall screens. */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 4rem);
+  padding-top: clamp(1.5rem, 4vw, 3.5rem);
+  padding-bottom: clamp(3rem, 8vw, 6rem);
+}
+.hero h1 {
+  font-size: clamp(2.3rem, 5.6vw, 4.1rem);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  margin: 0 0 1.4rem;
+  max-width: 15ch;
+}
+.hero h1 em {
+  font-style: italic;
+  color: var(--pigment);
+  line-height: 1.1;
+  padding-bottom: 0.06em;
+  display: inline-block;
+}
+.hero p {
+  color: var(--ink-soft);
+  font-size: clamp(1rem, 1.5vw, 1.13rem);
+  max-width: 46ch;
+  margin: 0 0 2.2rem;
+}
+.actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.btn {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  padding: 0.72rem 1.35rem;
+  border-radius: var(--edge);
+  border: 1px solid var(--pigment);
+  color: var(--paper);
+  background: var(--pigment);
+  white-space: nowrap;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn.ghost { background: none; color: var(--pigment); }
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(0.985); }
+
+/* The bloom is the hero's visual: pigment dropped on wet paper. */
+.bloom { position: relative; aspect-ratio: 1; width: 100%; margin: -6% -8% -6% 0; }
+.bloom svg { width: 100%; height: 100%; display: block; }
+
+/* ---------- the bench ---------- */
+
+.bench {
+  border: 1px solid var(--rule);
+  border-radius: var(--edge);
+  background: color-mix(in srgb, var(--paper-deep) 78%, transparent);
+  backdrop-filter: blur(6px);
+}
+.bench-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.75rem 1.15rem;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.bench textarea {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: none;
+  resize: vertical;
+  padding: 1.15rem;
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink);
+  outline: none;
+}
+.bench textarea::placeholder { color: var(--ink-faint); }
+.bench textarea:focus-visible { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pigment) 35%, transparent); }
+.bench-actions { display: flex; border-top: 1px solid var(--rule); }
+.bench-actions button {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pigment);
+  background: none;
+  border: 0;
+  border-right: 1px solid var(--rule);
+  padding: 0.85rem 1.5rem;
+  cursor: pointer;
+}
+.bench-actions button:hover { background: color-mix(in srgb, var(--pigment) 9%, transparent); }
+.bench-actions button:active { transform: scale(0.985); }
+.bench-actions button:disabled { color: var(--ink-faint); cursor: wait; }
+.bench-out:not(:empty) { border-top: 1px solid var(--rule); padding: 1.15rem; }
+
+.finding {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 0.15rem 0.9rem;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.finding:last-of-type { border-bottom: 0; }
+.f-id { color: var(--pigment); }
+.f-hit { color: var(--ink-faint); overflow-wrap: anywhere; }
+.f-why {
+  grid-column: 2 / -1;
+  font-family: var(--sans);
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+.tally {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+.band {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--edge);
+  border: 1px solid currentColor;
+}
+.band.clean { color: #2f6d4f; }
+.band.seasoned { color: var(--pigment); }
+.band.heavy { color: #9a3b2e; }
+:root[data-theme='dark'] .band.clean { color: #79c79b; }
+:root[data-theme='dark'] .band.heavy { color: #e08a7c; }
+.empty { font-size: 0.95rem; color: var(--ink-soft); margin: 0; }
+
+/* ---------- numbers ---------- */
+
+.numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: var(--edge); }
+.num { background: var(--paper); padding: 1.6rem 1.4rem; }
+.num b {
+  display: block;
+  font-family: var(--mono);
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--pigment);
+  line-height: 1;
+  margin-bottom: 0.55rem;
+}
+.num span { display: block; font-size: 0.9rem; color: var(--ink-soft); max-width: 30ch; }
+
+/* ---------- the atlas ---------- */
+
+.atlas { display: grid; gap: 0.55rem; max-width: 640px; }
+.atlas-row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) 4.5rem; align-items: center; gap: 1rem; }
+.atlas-row span:first-child { font-family: var(--mono); font-size: 0.78rem; color: var(--ink-soft); }
+.atlas-row span:last-child { font-family: var(--mono); font-size: 0.74rem; color: var(--ink-faint); text-align: right; }
+/* A settled pool of pigment, length set by the rate. Deliberately not a
+   progress bar: no track behind it, because there is no total to fill. */
+.drop {
+  height: 22px;
+  border-radius: 11px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--pigment) 55%, transparent), var(--pigment));
+  filter: url(#bleed-fine);
+  opacity: 0.8;
+  min-width: 22px;
+}
+
+/* ---------- refusal ---------- */
+
+.refusal { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: start; }
+.refusal blockquote {
+  margin: 0;
+  font-size: clamp(1.15rem, 2.2vw, 1.5rem);
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  max-width: 24ch;
+}
+.refusal p { color: var(--ink-soft); margin: 0 0 1rem; max-width: 52ch; }
+
+/* ---------- footer ---------- */
+
+footer.site {
+  border-top: 1px solid var(--rule);
+  padding: 2.5rem 0 3.5rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+}
+footer.site a { color: var(--ink-soft); text-decoration: none; }
+footer.site a:hover { color: var(--pigment); }
+
+code.inline {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: color-mix(in srgb, var(--pigment) 10%, transparent);
+  padding: 0.12em 0.4em;
+  border-radius: var(--edge);
+}
+
+a:focus-visible, button:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--pigment);
+  outline-offset: 2px;
+}
+
+/* ---------- entry motion ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .settle { animation: settle 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .settle:nth-child(2) { animation-delay: 0.07s; }
+  .settle:nth-child(3) { animation-delay: 0.14s; }
+  @keyframes settle {
+    from { opacity: 0; transform: translateY(10px); filter: blur(6px); }
+    to { opacity: 1; transform: none; filter: blur(0); }
+  }
+}
+
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; padding-top: 1.5rem; }
+  .bloom { max-width: 340px; margin: 0 0 -4%; order: -1; }
+  .refusal { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  nav.site a:not(.keep) { display: none; }
+  .finding { grid-template-columns: auto minmax(0, 1fr); }
+  .f-hit { grid-column: 2; }
+  .f-why { grid-column: 1 / -1; }
+  .atlas-row { grid-template-columns: 4.5rem minmax(0, 1fr); }
+  .atlas-row span:last-child { grid-column: 2; text-align: left; }
+}

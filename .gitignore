@@ -9,3 +9,8 @@ corpora/
 
 # The fitted catalog is a build artifact until the size pass (4.9MB today).
 catalog.toml
+
+# Site build artifacts, produced by scripts/build-wasm.sh and `tellem mine`.
+site/tellem/tellem_wasm_bg.wasm
+site/tellem/tellem_wasm.js
+site/tellem/catalog.toml

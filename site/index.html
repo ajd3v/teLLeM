@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>teLLeM, AI-text forensics with receipts</title>
+<meta name="description" content="teLLeM finds the fingerprints of generated prose and cites the rule behind every one. It runs in your browser, and below threshold it refuses to guess.">
+<link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="stylesheet" href="/styles.css?v=d36681b6">
+<script>
+ (function () {
+ var t = localStorage.getItem('tellem-theme');
+ if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+ document.documentElement.dataset.theme = t;
+ })();
+</script>
+</head>
+<body>
+
+<!-- Watercolour bleed. feTurbulence displaces the wash edge so pigment pools
+     unevenly, the way it does on wet paper. -->
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+ <filter id="bleed">
+ <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="4" seed="7" result="n"/>
+ <feDisplacementMap in="SourceGraphic" in2="n" scale="46" xChannelSelector="R" yChannelSelector="G"/>
+ </filter>
+ <filter id="bleed-fine">
+ <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="3" result="n"/>
+ <feDisplacementMap in="SourceGraphic" in2="n" scale="18" xChannelSelector="R" yChannelSelector="G"/>
+ </filter>
+</svg>
+
+<div class="washes" aria-hidden="true">
+ <div class="wash a"></div>
+ <div class="wash b"></div>
+ <div class="wash c"></div>
+</div>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="wrap">
+
+<header class="site">
+ <a class="brand" href="/">te<b>LL</b>eM</a>
+ <nav class="site" aria-label="Site">
+ <a class="keep" href="#bench">Bench</a>
+ <a href="#numbers">Numbers</a>
+ <a href="#atlas">Atlas</a>
+ <a class="keep" href="https://github.com/ajd3v/teLLeM">Source</a>
+ <button class="theme" id="theme" aria-label="Switch colour theme">Dark</button>
+ </nav>
+</header>
+
+<main>
+
+<section class="hero">
+ <div>
+ <h1 class="settle">Every finding cites <em>the rule</em> that fired.</h1>
+ <p class="settle">AI-text forensics in Rust. It runs in this tab, nothing you paste leaves the page, and below threshold it refuses to guess.</p>
+ <div class="actions settle">
+ <a class="btn" href="#bench">Try the bench</a>
+ <a class="btn ghost" href="#numbers">Read the numbers</a>
+ </div>
+ </div>
+ <div class="bloom" aria-hidden="true">
+ <svg viewBox="0 0 400 400">
+ <defs>
+ <radialGradient id="g1" cx="46%" cy="42%">
+ <stop offset="0%" stop-color="var(--pigment-wet)" stop-opacity="0.85"/>
+ <stop offset="55%" stop-color="var(--pigment)" stop-opacity="0.32"/>
+ <stop offset="100%" stop-color="var(--pigment)" stop-opacity="0"/>
+ </radialGradient>
+ <radialGradient id="g2" cx="60%" cy="62%">
+ <stop offset="0%" stop-color="var(--pigment)" stop-opacity="0.55"/>
+ <stop offset="70%" stop-color="var(--pigment)" stop-opacity="0.1"/>
+ <stop offset="100%" stop-color="var(--pigment)" stop-opacity="0"/>
+ </radialGradient>
+ </defs>
+ <g filter="url(#bleed)">
+ <circle cx="196" cy="180" r="150" fill="url(#g1)"/>
+ <circle cx="232" cy="246" r="104" fill="url(#g2)"/>
+ </g>
+ <g filter="url(#bleed-fine)" opacity="0.5">
+ <circle cx="150" cy="152" r="52" fill="url(#g2)"/>
+ </g>
+ </svg>
+ </div>
+</section>
+
+<section id="bench">
+ <h2>Paste anything. Watch it get read.</h2>
+ <p class="lede">Three verbs on one engine. <code class="inline">lint</code> names the tells, <code class="inline">fix</code> rewrites them without a model in the loop, and <code class="inline">who</code> attributes the text to a model family or says it cannot. All of it compiled to wasm and running on your machine.</p>
+
+ <div class="bench">
+ <div class="bench-head">
+ <span>70 rules, base pack, client side</span>
+ <span id="status">idle</span>
+ </div>
+ <textarea id="input" rows="7" spellcheck="false" aria-label="Text to analyse" placeholder="Paste a paragraph and find out what it gives away."></textarea>
+ <div class="bench-actions">
+ <button type="button" id="lint">Lint</button>
+ <button type="button" id="fix">Fix</button>
+ <button type="button" id="who">Who wrote it</button>
+ <button type="button" id="sample">Sample</button>
+ </div>
+ <div class="bench-out" id="out" aria-live="polite"></div>
+ </div>
+</section>
+
+<section id="numbers">
+ <h2>The numbers, as measured.</h2>
+ <p class="lede">Attribution is held out on 10,190 samples across five model families, split by prompt so no prompt lands on both sides of the split. The threshold is derived from that split rather than picked. Precision is the fixed point and coverage is whatever falls out of it.</p>
+ <div class="numbers">
+ <div class="num"><b>95.0%</b><span>precision on the families it calls</span></div>
+ <div class="num"><b>84.3%</b><span>of texts get a call, the rest are refused</span></div>
+ <div class="num"><b>3.5%</b><span>false positives across 32,523 out-of-catalog texts</span></div>
+ <div class="num"><b>0.4 ms</b><span>to lint a paragraph in your browser</span></div>
+ </div>
+</section>
+
+<section id="atlas">
+ <h2>The catalog is the deliverable.</h2>
+ <p class="lede">Mining produces one row per feature with a column per family, so habits read straight across. Here is how often each family reaches for the word <code class="inline">delve</code>, per thousand words of its own output.</p>
+ <div class="atlas" id="atlasRows"></div>
+</section>
+
+<section>
+ <div class="refusal">
+ <blockquote>It never returns a percentage, and it never calls a person a machine.</blockquote>
+ <div>
+ <p>A single tell proves nothing. Clustering is the only honest signal, so lint reports a density and a band rather than a verdict.</p>
+ <p>Attribution has the same discipline built in. A five-way classifier must pick one of five, whatever you show it, which is why the first version named a model for 45% of genuine human writing. The catalog now carries a rejection class, and text that ranks into it gets no match at any confidence.</p>
+ <p>Closed-set attribution is stylometric and probabilistic. It degrades on short text, on edited text, and on models that were never harvested. It is a forensic aid with cited evidence, not proof of authorship.</p>
+ </div>
+ </div>
+</section>
+
+</main>
+
+<footer class="site">
+ <span>MIT licensed. Built in Rust by Alan De Vaney.</span>
+ <span><a href="https://github.com/ajd3v/teLLeM">Source</a> and <a href="https://gainful.work">gainful.work</a></span>
+</footer>
+
+</div>
+
+<script type="module" src="/tellem/bench.js?v=6a2b9f48"></script>
+<script>
+(function () {
+ var btn = document.getElementById('theme');
+ function label() { btn.textContent = document.documentElement.dataset.theme === 'dark' ? 'Light' : 'Dark'; }
+ btn.addEventListener('click', function () {
+ var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+ document.documentElement.dataset.theme = next;
+ localStorage.setItem('tellem-theme', next);
+ label();
+ });
+ label();
+
+ /* Rates per kiloword straight out of catalog.toml, row "w:delve". */
+ var DELVE = [
+ ['grok', 0.0159], ['gpt-4', 0.0110], ['gemini-1', 0.0099],
+ ['deepseek', 0.0029], ['human', 0.0007], ['claude-3', 0.0004]
+ ];
+ var max = DELVE[0][1];
+ var rows = document.getElementById('atlasRows');
+ DELVE.forEach(function (r) {
+ var row = document.createElement('div');
+ row.className = 'atlas-row';
+ var name = document.createElement('span'); name.textContent = r[0];
+ var cell = document.createElement('span');
+ var drop = document.createElement('div');
+ drop.className = 'drop';
+ drop.style.width = Math.max(4, (r[1] / max) * 100) + '%';
+ cell.appendChild(drop);
+ var val = document.createElement('span'); val.textContent = r[1].toFixed(4) + '/kw';
+ row.append(name, cell, val);
+ rows.appendChild(row);
+ });
+})();
+</script>
+</body>
+</html>
