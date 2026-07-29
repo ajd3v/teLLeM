@@ -93,6 +93,10 @@ enum Cmd {
         /// Out-of-catalog text (human writing). Every call on it is a false positive.
         #[arg(long)]
         negatives: Option<PathBuf>,
+        /// Cut every sample to this many words and drop shorter ones, so
+        /// response length cannot stand in for style.
+        #[arg(long, default_value_t = 0)]
+        truncate: usize,
     },
 }
 
@@ -178,7 +182,16 @@ fn run() -> Result<(), tellem_core::Error> {
             holdout,
             epochs,
             negatives,
-        } => attribute_cmd::eval_cmd(&corpus, top_k, floor, holdout, epochs, negatives.as_deref())?,
+            truncate,
+        } => attribute_cmd::eval_cmd(
+            &corpus,
+            top_k,
+            floor,
+            holdout,
+            epochs,
+            negatives.as_deref(),
+            truncate,
+        )?,
         Cmd::Fix { file, pack, write } => {
             let text = read_input(&file)?;
             let fixed = engine(&pack)?.fix(&text);

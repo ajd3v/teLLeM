@@ -79,23 +79,33 @@ not the specific classifier.
 
 ### Does a fingerprint survive a model generation?
 
-The catalog is built from late-2024 models, and everything frontier since has
-been tuned harder toward the same register, so the obvious worry is that the
-signal has flattened. `scripts/era-compare.py` holds everything fixed except
-the era: same two vendors, same prompt ids, same sample count, same two-class
-task.
+The catalog is built from late-2024 models and everything frontier since has
+been tuned harder toward the same register, so the worry is that the signal has
+flattened. `scripts/era-compare.py` holds everything fixed except the era: same
+two vendors, same prompt ids, same sample count, same two-class task.
 
-| | forced choice | at the 95% floor |
+| word cap | 2024, claude-3-5-sonnet vs gemini-1.5-pro | 2026, claude-sonnet-4-6 vs gemini-3-flash |
 |---|---|---|
-| 2024, claude-3-5-sonnet against gemini-1.5-pro | 93.8% | 96.9% coverage |
-| 2026, claude-sonnet-4-6 against gemini-3-flash | 90.6% | 82.8% coverage |
+| none | 93.8% | 90.6% |
+| 100 | 95.5% | 85.6% |
+| 60 | 89.8% | 86.5% |
+| 40 | 90.2% | 81.0% |
 
-The fingerprints survive. Across four holdout splits the 2026 pair came out
-about four points harder in three of them, which points the way you would
-expect, but roughly 130 held-out samples per era puts the 95% interval near
-five points. The gap is suggestive and it is not significant. Read it as
-"still works, watch this number as the catalog refreshes", not as a measured
-rate of decay.
+**The fingerprints survive.** Every setting lands far above the 50% a coin
+would get, so two generations of tuning have not erased the signal.
+
+**How much harder 2026 is, this data cannot say.** The gap runs from 3 to 10
+points depending on where the word cap sits, and roughly 100 to 130 held-out
+samples per era puts the 95% interval near 5 points on its own. The direction
+is consistent across all four settings and the magnitude is not trustworthy.
+
+Two things that table is worth reading for anyway. Capping length costs about
+four points in BOTH eras, so a chunk of any untruncated attribution number is
+the classifier reading how much a model says rather than how it says it. That
+is why `eval` takes `--truncate`. And the 2026 pair loses samples as the cap
+rises, because gemini-3-flash answers in a median of 72 words against
+claude-sonnet-4-6's 238, so the higher caps quietly select for its wordiest
+replies. Read the 40 and 60 rows before the 100 row.
 
 ## Benchmarks (honest numbers)
 

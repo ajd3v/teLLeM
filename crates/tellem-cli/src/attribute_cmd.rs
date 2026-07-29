@@ -121,8 +121,29 @@ pub fn eval_cmd(
     holdout: u64,
     epochs: usize,
     negatives_path: Option<&Path>,
+    truncate: usize,
 ) -> Result<(), Error> {
-    let records = read_corpus(corpus)?;
+    let mut records = read_corpus(corpus)?;
+    // Length is a confound, not a fingerprint. Model families differ wildly in
+    // how much they say (72 words against 238 in one harvested pair), so a
+    // classifier can score well by reading verbosity and look like it read
+    // style. Truncating every sample to the same word count removes that
+    // channel, and what survives is the part worth publishing.
+    if truncate > 0 {
+        records.retain(|r| r.text.split_whitespace().count() >= truncate);
+        for r in &mut records {
+            r.text = r
+                .text
+                .split_whitespace()
+                .take(truncate)
+                .collect::<Vec<_>>()
+                .join(" ");
+        }
+        println!(
+            "truncated to {truncate} words, {} samples long enough",
+            records.len()
+        );
+    }
     let (train, test): (Vec<&Record>, Vec<&Record>) = records.iter().partition(|r| {
         let key = if r.prompt_id.is_empty() {
             &r.text
