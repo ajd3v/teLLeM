@@ -25,14 +25,19 @@ pub struct Fingerprint {
     pub family: String,
     pub samples: usize,
     pub tokens: u64,
+    /// logistic regression intercept for this family
+    #[serde(default)]
+    pub bias: f32,
     /// word -> evidence, sorted by word so a re-mine produces a clean diff
     pub features: BTreeMap<String, Feature>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
 pub struct Feature {
-    /// log P(word | family), smoothed. The naive Bayes term.
-    pub log_prob: f32,
+    /// logistic regression coefficient. Contribution to a call is weight*value,
+    /// which is what a receipt prints.
+    #[serde(default)]
+    pub weight: f32,
     /// log-odds z vs the pooled background. Selection criterion and receipt.
     pub z: f32,
     /// occurrences per 1000 tokens in this family
@@ -45,6 +50,10 @@ pub struct Feature {
 pub struct Catalog {
     /// Corpus provenance, printed by `who` so a reader knows the closed set.
     pub source: String,
+    /// Inverse document frequency per vocabulary feature. Defines the vocabulary
+    /// and its column order for scoring.
+    #[serde(default)]
+    pub idf: BTreeMap<String, f32>,
     pub fingerprints: Vec<Fingerprint>,
 }
 
@@ -134,15 +143,20 @@ pub fn mine_from(samples: impl IntoIterator<Item = (String, String)>, top_k: usi
     let mut per_family: BTreeMap<String, Counts> = BTreeMap::new();
     let mut pooled = Counts::default();
 
+    let mut doc_freq: HashMap<String, u64> = HashMap::new();
     for (family, text) in samples {
         let c = per_family.entry(family).or_default();
         c.samples += 1;
         pooled.samples += 1;
-        for w in tokens(&text) {
+        let toks = tokens(&text);
+        for w in &toks {
             c.total += 1;
             pooled.total += 1;
             *c.by_word.entry(w.clone()).or_insert(0) += 1;
-            *pooled.by_word.entry(w).or_insert(0) += 1;
+            *pooled.by_word.entry(w.clone()).or_insert(0) += 1;
+        }
+        for w in toks.into_iter().collect::<std::collections::BTreeSet<_>>() {
+            *doc_freq.entry(w).or_insert(0) += 1;
         }
     }
 
@@ -181,7 +195,6 @@ pub fn mine_from(samples: impl IntoIterator<Item = (String, String)>, top_k: usi
             vocab.insert(w.clone(), ());
         }
     }
-    let v = vocab.len() as f64;
 
     let fingerprints = per_family
         .iter()
@@ -193,10 +206,7 @@ pub fn mine_from(samples: impl IntoIterator<Item = (String, String)>, top_k: usi
                     let y_iw = c.by_word.get(word).copied().unwrap_or(0);
                     let y_w = pooled.by_word[word] as f64;
                     let feature = Feature {
-                        // Laplace over the SHARED vocabulary, so the smoothing
-                        // is identical across families and no family wins on
-                        // the shape of its own word list.
-                        log_prob: ((y_iw as f64 + 1.0) / (ni + v)).ln() as f32,
+                        weight: 0.0,
                         z: z_of(c, word, y_iw) as f32,
                         rate: (y_iw as f64 / ni * 1000.0) as f32,
                         baseline: (y_w / n * 1000.0) as f32,
@@ -208,13 +218,24 @@ pub fn mine_from(samples: impl IntoIterator<Item = (String, String)>, top_k: usi
                 family: family.clone(),
                 samples: c.samples,
                 tokens: c.total,
+                bias: 0.0,
                 features,
             }
         })
         .collect();
 
+    let n_docs = pooled.samples as f32;
+    let idf = vocab
+        .keys()
+        .map(|w| {
+            let df = doc_freq.get(w).copied().unwrap_or(0) as f32;
+            (w.clone(), ((1.0 + n_docs) / (1.0 + df)).ln() + 1.0)
+        })
+        .collect();
+
     Catalog {
         source: String::new(),
+        idf,
         fingerprints,
     }
 }

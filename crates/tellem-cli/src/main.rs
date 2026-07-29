@@ -43,16 +43,18 @@ enum Cmd {
         #[arg(long, short, default_value = "catalog.toml")]
         out: PathBuf,
         /// Features kept per family, by |z|
-        #[arg(long, default_value_t = 400)]
+        #[arg(long, default_value_t = 2000)]
         top_k: usize,
+        #[arg(long, default_value_t = 12)]
+        epochs: usize,
     },
     /// Closed-set model attribution, refuses below the margin
     Who {
         file: Option<PathBuf>,
         #[arg(long, short, default_value = "catalog.toml")]
         catalog: PathBuf,
-        /// Margin threshold. Derive it with `eval`, do not guess it.
-        #[arg(long, default_value_t = 0.10)]
+        /// Confidence threshold. Derive it with `eval`, do not guess it.
+        #[arg(long, default_value_t = 0.30)]
         margin: f32,
         #[arg(long)]
         json: bool,
@@ -60,8 +62,10 @@ enum Cmd {
     /// Held-out eval: derive the margin that holds the precision floor
     Eval {
         corpus: PathBuf,
-        #[arg(long, default_value_t = 400)]
+        #[arg(long, default_value_t = 2000)]
         top_k: usize,
+        #[arg(long, default_value_t = 12)]
+        epochs: usize,
         /// Precision floor the threshold must hold (the invariant)
         #[arg(long, default_value_t = 0.95)]
         floor: f32,
@@ -127,7 +131,12 @@ fn run() -> Result<(), tellem_core::Error> {
                 std::process::exit(1);
             }
         }
-        Cmd::Mine { corpus, out, top_k } => attribute_cmd::mine_cmd(&corpus, &out, top_k)?,
+        Cmd::Mine {
+            corpus,
+            out,
+            top_k,
+            epochs,
+        } => attribute_cmd::mine_cmd(&corpus, &out, top_k, epochs)?,
         Cmd::Who {
             file,
             catalog,
@@ -139,7 +148,8 @@ fn run() -> Result<(), tellem_core::Error> {
             top_k,
             floor,
             holdout,
-        } => attribute_cmd::eval_cmd(&corpus, top_k, floor, holdout)?,
+            epochs,
+        } => attribute_cmd::eval_cmd(&corpus, top_k, floor, holdout, epochs)?,
         Cmd::Fix { file, pack, write } => {
             let text = read_input(&file)?;
             let fixed = engine(&pack)?.fix(&text);

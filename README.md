@@ -45,6 +45,31 @@ CI-enforced guarantee: fixed output re-linted never gains total tell weight,
 and every finding from a rule fix claims to handle is gone. Structural tells
 are out of scope by design and will surface via `--suggest`.
 
+## who
+
+Closed-set attribution over a mined catalog. `mine` learns a fingerprint per
+model family from a labelled corpus, `who` scores text against it, and `eval`
+derives the confidence threshold from a held-out split rather than picking one.
+
+Held out on 10,190 samples (five families, split by prompt so no prompt appears
+on both sides), corpus is locuslab/llm-idiosyncrasies, late-2024 models:
+
+| | |
+|---|---|
+| forced choice, no abstention | 88.9% |
+| at the 95% precision floor | 95.1% precision, 83.6% coverage |
+| at 0.90 confidence | 98.7% precision, 67.6% coverage |
+
+The threshold is derived, never hand-picked. Precision is the invariant and
+coverage is whatever falls out of it, so `who` refuses on about one text in six
+rather than guessing. Every call prints the features that decided it, with the
+family rate against the corpus baseline.
+
+Naive Bayes was tried first and reached 72.7% forced choice, clearing the floor
+only at 34% coverage. Logistic regression on the same features is still a dot
+product, so every contribution still prints. Explainability was the constraint,
+not the specific classifier.
+
 ## Benchmarks (honest numbers)
 
 criterion, single thread, base pack, 1.2 MB of prose:

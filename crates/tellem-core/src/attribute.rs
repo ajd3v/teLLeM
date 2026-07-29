@@ -1,40 +1,42 @@
-//! who: score text against the catalog, and refuse below the margin.
+//! who: score text against the catalog, and refuse below threshold.
 //!
-//! Multinomial naive Bayes over the mined vocabulary, scored as a MEAN log
-//! probability per matched token so a long text and a short one produce
-//! comparable margins. Without that normalization the threshold would really be
-//! a length threshold, and the corpus shows response length varies more between
-//! model families than almost anything else.
+//! The score is a dot product of the text's tf-idf vector with each family's
+//! coefficients, so a single feature's contribution is `weight * value` and can
+//! be printed. Confidence is the gap between the top two softmax posteriors,
+//! NOT the raw score gap: raw scores grow with length, so thresholding on them
+//! calls long text confidently and short text never, which is a length
+//! threshold wearing a confidence costume.
 
 use serde::Serialize;
 
-use crate::mine::{tokens, Catalog};
+use crate::mine::Catalog;
+use crate::train::vectorize;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Candidate {
     pub family: String,
-    /// mean log P(token | family) over tokens the catalog knows
-    pub score: f32,
+    /// posterior probability, the five summing to 1
+    pub probability: f32,
 }
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Receipt {
-    pub word: String,
-    /// how far this word pushed the winner ahead of the runner-up
+    /// namespaced feature: w: word, b: bigram, p: punctuation, s: layout
+    pub feature: String,
+    /// how far this feature pushed the winner ahead of the runner-up
     pub contribution: f32,
     /// occurrences per 1000 tokens in the winning family
     pub rate: f32,
     /// occurrences per 1000 tokens across the whole catalog corpus
     pub baseline: f32,
-    pub count: usize,
 }
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Attribution {
     pub ranked: Vec<Candidate>,
-    /// winner score minus runner-up score. The quantity the threshold gates on.
-    pub margin: f32,
-    /// tokens that matched the catalog vocabulary
+    /// top posterior minus runner-up. The quantity the threshold gates on.
+    pub confidence: f32,
+    /// vocabulary features the text actually hit
     pub matched: usize,
     /// Some(family) only above threshold. None means insufficient signal.
     pub call: Option<String>,
@@ -45,76 +47,63 @@ pub struct Attribution {
 }
 
 impl Catalog {
-    /// Attribute `text`, calling a family only when the margin clears
-    /// `min_margin` and enough tokens matched to mean anything.
-    pub fn who(&self, text: &str, min_margin: f32, min_matched: usize) -> Attribution {
-        let words: Vec<String> = tokens(text);
-        let mut totals = vec![0.0f64; self.fingerprints.len()];
-        let mut counts = vec![0usize; self.fingerprints.len()];
-        // per family, per word: summed log prob, for the receipts
-        let mut per_word: Vec<(String, usize, Vec<f32>)> = Vec::new();
+    /// Attribute `text`, calling a family only when the posterior gap clears
+    /// `min_confidence` and enough features matched to mean anything.
+    pub fn who(&self, text: &str, min_confidence: f32, min_matched: usize) -> Attribution {
+        let index = self.index();
+        let idf: Vec<f32> = self.idf.values().copied().collect();
+        let x = vectorize(text, &index, &idf);
+        let names: Vec<&String> = self.idf.keys().collect();
 
-        let mut seen: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
-        for w in &words {
-            if let Some(&i) = seen.get(w) {
-                per_word[i].1 += 1;
-                continue;
-            }
-            // A word only counts when every family has an opinion about it,
-            // otherwise a missing entry silently becomes evidence.
-            let vals: Option<Vec<f32>> = self
-                .fingerprints
-                .iter()
-                .map(|f| f.features.get(w).map(|x| x.log_prob))
-                .collect();
-            if let Some(vals) = vals {
-                seen.insert(w.clone(), per_word.len());
-                per_word.push((w.clone(), 1, vals));
-            }
+        let mut scores: Vec<f32> = self
+            .fingerprints
+            .iter()
+            .map(|f| {
+                f.bias
+                    + x.iter()
+                        .map(|&(i, v)| f.features.get(names[i]).map_or(0.0, |c| c.weight) * v)
+                        .sum::<f32>()
+            })
+            .collect();
+
+        let max = scores.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+        let mut sum = 0.0;
+        for s in &mut scores {
+            *s = (*s - max).exp();
+            sum += *s;
         }
-
-        for (_, n, vals) in &per_word {
-            for (i, v) in vals.iter().enumerate() {
-                totals[i] += (*v as f64) * (*n as f64);
-                counts[i] += n;
-            }
-        }
-
-        let matched = counts.first().copied().unwrap_or(0);
-        let mut ranked: Vec<Candidate> = self
+        let mut ranked: Vec<(usize, Candidate)> = self
             .fingerprints
             .iter()
             .enumerate()
-            .map(|(i, f)| Candidate {
-                family: f.family.clone(),
-                // Summed, not averaged. The margin is then a log Bayes factor,
-                // so a long sample earns confidence a short one has not: short
-                // text abstains by construction rather than by special case.
-                score: if matched == 0 {
-                    f32::NEG_INFINITY
-                } else {
-                    totals[i] as f32
-                },
+            .map(|(i, f)| {
+                (
+                    i,
+                    Candidate {
+                        family: f.family.clone(),
+                        probability: if sum > 0.0 { scores[i] / sum } else { 0.0 },
+                    },
+                )
             })
             .collect();
-        ranked.sort_by(|a, b| b.score.total_cmp(&a.score));
+        ranked.sort_by(|a, b| b.1.probability.total_cmp(&a.1.probability));
 
-        let margin = match ranked.as_slice() {
-            [a, b, ..] => a.score - b.score,
+        let confidence = match ranked.as_slice() {
+            [a, b, ..] => a.1.probability - b.1.probability,
             _ => 0.0,
         };
-        let call = (matched >= min_matched && margin >= min_margin && !ranked.is_empty())
-            .then(|| ranked[0].family.clone());
+        let call = (x.len() >= min_matched && confidence >= min_confidence && !ranked.is_empty())
+            .then(|| ranked[0].1.family.clone());
 
-        let receipts = call
-            .as_ref()
-            .map(|winner| self.receipts_for(winner, &ranked, &per_word))
-            .unwrap_or_default();
+        let receipts = match (&call, ranked.len()) {
+            (Some(_), n) if n >= 2 => self.receipts_for(ranked[0].0, ranked[1].0, &x, &names),
+            _ => Vec::new(),
+        };
 
         Attribution {
-            ranked,
-            margin,
-            matched,
+            ranked: ranked.into_iter().map(|(_, c)| c).collect(),
+            confidence,
+            matched: x.len(),
             call,
             receipts,
             catalog: self.families().into_iter().map(String::from).collect(),
@@ -123,26 +112,23 @@ impl Catalog {
 
     fn receipts_for(
         &self,
-        winner: &str,
-        ranked: &[Candidate],
-        per_word: &[(String, usize, Vec<f32>)],
+        winner: usize,
+        runner: usize,
+        x: &[(usize, f32)],
+        names: &[&String],
     ) -> Vec<Receipt> {
-        let idx = |name: &str| self.fingerprints.iter().position(|f| f.family == name);
-        let (Some(wi), Some(ri)) = (idx(winner), ranked.get(1).and_then(|c| idx(&c.family))) else {
-            return Vec::new();
-        };
-        let fp = &self.fingerprints[wi];
-        let mut rows: Vec<Receipt> = per_word
+        let (w, r) = (&self.fingerprints[winner], &self.fingerprints[runner]);
+        let mut rows: Vec<Receipt> = x
             .iter()
-            .map(|(word, n, vals)| {
-                let f = &fp.features[word];
-                Receipt {
-                    word: word.clone(),
-                    contribution: (vals[wi] - vals[ri]) * *n as f32,
-                    rate: f.rate,
-                    baseline: f.baseline,
-                    count: *n,
-                }
+            .filter_map(|&(i, v)| {
+                let wf = w.features.get(names[i])?;
+                let rf = r.features.get(names[i])?;
+                Some(Receipt {
+                    feature: names[i].clone(),
+                    contribution: (wf.weight - rf.weight) * v,
+                    rate: wf.rate,
+                    baseline: wf.baseline,
+                })
             })
             .collect();
         rows.sort_by(|a, b| b.contribution.total_cmp(&a.contribution));

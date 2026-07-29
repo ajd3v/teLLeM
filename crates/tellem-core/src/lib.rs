@@ -6,6 +6,7 @@ mod fix;
 mod lint;
 mod mask;
 pub mod mine;
+pub mod train;
 
 use std::collections::HashMap;
 

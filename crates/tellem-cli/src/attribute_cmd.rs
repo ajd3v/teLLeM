@@ -8,7 +8,8 @@ use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
-use tellem_core::mine::{mine_from, Catalog};
+use tellem_core::mine::Catalog;
+use tellem_core::train::fit;
 use tellem_core::Error;
 
 #[derive(Deserialize)]
@@ -46,12 +47,13 @@ fn bucket(s: &str) -> u64 {
     })
 }
 
-pub fn mine_cmd(corpus: &Path, out: &Path, top_k: usize) -> Result<(), Error> {
+pub fn mine_cmd(corpus: &Path, out: &Path, top_k: usize, epochs: usize) -> Result<(), Error> {
     let records = read_corpus(corpus)?;
-    let mut catalog = mine_from(
-        records.iter().map(|r| (r.family.clone(), r.text.clone())),
-        top_k,
-    );
+    let samples: Vec<(String, String)> = records
+        .iter()
+        .map(|r| (r.family.clone(), r.text.clone()))
+        .collect();
+    let mut catalog = fit(&samples, top_k, epochs);
     catalog.source = corpus.display().to_string();
     std::fs::write(out, toml::to_string(&catalog)?)?;
     println!(
@@ -80,7 +82,12 @@ pub fn who_cmd(
         return Ok(());
     }
     match &a.call {
-        Some(f) => println!("{f}  (margin {:.3} over {})", a.margin, a.ranked[1].family),
+        Some(f) => println!(
+            "{f}  ({:.0}% vs {:.0}% {})",
+            a.ranked[0].probability * 100.0,
+            a.ranked[1].probability * 100.0,
+            a.ranked[1].family
+        ),
         None => println!(
             "insufficient signal, closest: {}",
             a.ranked
@@ -93,12 +100,12 @@ pub fn who_cmd(
     }
     for r in &a.receipts {
         println!(
-            "  {:<16} x{:<3} {:.1}/kw vs {:.1}/kw baseline",
-            r.word, r.count, r.rate, r.baseline
+            "  {:<28} +{:.3}  {:.2}/kw vs {:.2}/kw baseline",
+            r.feature, r.contribution, r.rate, r.baseline
         );
     }
     println!(
-        "{} tokens matched, among the {} families in this catalog",
+        "{} features matched, among the {} families in this catalog",
         a.matched,
         a.catalog.len()
     );
@@ -107,7 +114,13 @@ pub fn who_cmd(
 
 /// Derive the margin threshold from a held-out split instead of picking one.
 /// The floor is the invariant, coverage is whatever it turns out to be.
-pub fn eval_cmd(corpus: &Path, top_k: usize, floor: f32, holdout: u64) -> Result<(), Error> {
+pub fn eval_cmd(
+    corpus: &Path,
+    top_k: usize,
+    floor: f32,
+    holdout: u64,
+    epochs: usize,
+) -> Result<(), Error> {
     let records = read_corpus(corpus)?;
     let (train, test): (Vec<&Record>, Vec<&Record>) = records
         .iter()
@@ -119,10 +132,11 @@ pub fn eval_cmd(corpus: &Path, top_k: usize, floor: f32, holdout: u64) -> Result
         test.len()
     );
 
-    let catalog = mine_from(
-        train.iter().map(|r| (r.family.clone(), r.text.clone())),
-        top_k,
-    );
+    let train_samples: Vec<(String, String)> = train
+        .iter()
+        .map(|r| (r.family.clone(), r.text.clone()))
+        .collect();
+    let catalog = fit(&train_samples, top_k, epochs);
     for f in &catalog.fingerprints {
         println!(
             "  {:<12} {:>6} samples, {:>9} tokens",
@@ -130,23 +144,15 @@ pub fn eval_cmd(corpus: &Path, top_k: usize, floor: f32, holdout: u64) -> Result
         );
     }
 
-    // Score once, then sweep. The confidence statistic is the margin scaled by
-    // sqrt(tokens): a raw margin is a sum, so it grows with length and a long
-    // weak call outranks a short strong one. Dividing by sqrt(n) is the usual
-    // move for "is this mean difference real given how much evidence there is".
+    // Score once, then sweep the posterior gap.
     let scored: Vec<(String, Option<String>, f32)> = test
         .iter()
         .map(|r| {
             let a = catalog.who(&r.text, 0.0, 0);
-            let conf = if a.matched == 0 {
-                0.0
-            } else {
-                a.margin / (a.matched as f32).sqrt()
-            };
             (
                 r.family.clone(),
                 a.ranked.first().map(|c| c.family.clone()),
-                conf,
+                a.confidence,
             )
         })
         .collect();
@@ -162,8 +168,8 @@ pub fn eval_cmd(corpus: &Path, top_k: usize, floor: f32, holdout: u64) -> Result
     );
 
     let mut chosen: Option<(f32, f32, f32)> = None;
-    println!("\n{:<9} {:>10} {:>10}", "margin", "precision", "coverage");
-    let mut steps: Vec<f32> = (0..=200).map(|i| i as f32 * 0.05).collect();
+    println!("\n{:<9} {:>10} {:>10}", "conf", "precision", "coverage");
+    let mut steps: Vec<f32> = (0..=99).map(|i| i as f32 * 0.01).collect();
     steps.dedup();
     for m in steps {
         let called: Vec<_> = scored.iter().filter(|(_, _, mg)| *mg >= m).collect();
@@ -176,7 +182,7 @@ pub fn eval_cmd(corpus: &Path, top_k: usize, floor: f32, holdout: u64) -> Result
             .count();
         let precision = hits as f32 / called.len() as f32;
         let coverage = called.len() as f32 / scored.len() as f32;
-        if ((m * 100.0) as u32) % 50 == 0 {
+        if ((m * 100.0) as u32).is_multiple_of(10) {
             println!(
                 "{m:<9.2} {:>9.1}% {:>9.1}%",
                 precision * 100.0,
@@ -190,7 +196,7 @@ pub fn eval_cmd(corpus: &Path, top_k: usize, floor: f32, holdout: u64) -> Result
 
     match chosen {
         Some((m, p, c)) => println!(
-            "\nthreshold {m:.2} is the lowest margin holding {:.0}% precision: \
+            "\nthreshold {m:.2} is the lowest confidence holding {:.0}% precision: \
              {:.1}% precision at {:.1}% coverage",
             floor * 100.0,
             p * 100.0,
@@ -218,7 +224,7 @@ pub fn eval_cmd(corpus: &Path, top_k: usize, floor: f32, holdout: u64) -> Result
         }
     }
     let families = catalog.families();
-    println!("\nconfusion at margin {m:.2} (rows are truth)");
+    println!("\nconfusion at confidence {m:.2} (rows are truth)");
     print!("{:<12}", "");
     for f in &families {
         print!("{f:>10}");

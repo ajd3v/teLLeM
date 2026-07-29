@@ -6,3 +6,6 @@ corpora/
 
 # Harvested and downloaded corpora stay local (SPEC: raw corpora are private).
 corpora/
+
+# The fitted catalog is a build artifact until the size pass (4.9MB today).
+catalog.toml
