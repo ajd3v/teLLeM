@@ -17,3 +17,6 @@ site/tellem/catalog.toml
 
 # Local harvest config may hold a key.
 harvest.toml
+
+# Generated from the catalog by site/atlas.py.
+site/tellem/atlas.json

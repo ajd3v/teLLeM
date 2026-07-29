@@ -8,6 +8,7 @@ bench runs client side as wasm.
 ```sh
 ./scripts/build-wasm.sh                 # from the repo root, writes site/tellem/
 ./target/release/tellem mine corpora/with-rejection.jsonl -o site/tellem/catalog.toml
+python3 site/atlas.py                   # pull the atlas row out of the catalog
 python3 site/stamp.py                   # version the asset URLs
 ```
 

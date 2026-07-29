@@ -156,17 +156,19 @@
  });
  label();
 
- /* Rates per kiloword straight out of catalog.toml, row "w:delve". */
- var DELVE = [
- ['grok', 0.0159], ['gpt-4', 0.0110], ['gemini-1', 0.0099],
- ['deepseek', 0.0029], ['human', 0.0007], ['claude-3', 0.0004]
- ];
- var max = DELVE[0][1];
+ /* Generated from catalog.toml by site/atlas.py. Hardcoding these meant a
+ remine would quietly leave the page stating numbers the catalog no longer
+ holds, which is the one thing this tool is not allowed to do. */
  var rows = document.getElementById('atlasRows');
- DELVE.forEach(function (r) {
+ fetch('/tellem/atlas.json')
+ .then(function (r) { return r.json(); })
+ .then(function (a) {
+ var max = a.rows[0][1];
+ a.rows.forEach(function (r) {
  var row = document.createElement('div');
  row.className = 'atlas-row';
- var name = document.createElement('span'); name.textContent = r[0];
+ var name = document.createElement('span');
+ name.textContent = r[0] === 'unmatched' ? 'human' : r[0];
  var cell = document.createElement('span');
  var drop = document.createElement('div');
  drop.className = 'drop';
@@ -175,6 +177,10 @@
  var val = document.createElement('span'); val.textContent = r[1].toFixed(4) + '/kw';
  row.append(name, cell, val);
  rows.appendChild(row);
+ });
+ })
+ .catch(function () {
+ rows.textContent = 'The catalog did not load, so there are no numbers to show.';
  });
 })();
 </script>

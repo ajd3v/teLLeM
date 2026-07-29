@@ -17,8 +17,10 @@ copy_to() {
      "$HERE/target/wasm-site/tellem_wasm_bg.wasm" "$1/tellem/"
 }
 
-# 1. tellem.gainful.work. stamp.py versions styles.css and bench.js together.
+# 1. tellem.gainful.work. atlas.py re-reads the catalog so the page cannot
+#    quote stale rates, stamp.py versions styles.css and bench.js together.
 copy_to "$HERE/site"
+[ -f "$HERE/site/tellem/catalog.toml" ] && python3 "$HERE/site/atlas.py"
 python3 "$HERE/site/stamp.py"
 
 # 2. The portfolio bench, if it is checked out. Its widget.js is versioned by
