@@ -19,7 +19,6 @@ delay_secs = 6.0
 per_run = 120
 strikes = 3
 backoff_secs = 60.0
-retries = 4
 
 [[models]]
 family = "claude-4"

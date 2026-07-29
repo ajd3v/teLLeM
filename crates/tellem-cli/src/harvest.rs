@@ -35,14 +35,11 @@ pub struct Config {
     /// Give up on a model for this run after this many consecutive failures.
     #[serde(default = "default_strikes")]
     pub strikes: usize,
-    /// How long to wait out a 429 before retrying the same prompt, and how
-    /// many times. The gateway rate limits under sustained load, and a rate
-    /// limit is transient, so retiring the model over one is throwing away
-    /// samples that were about to be available.
+    /// How long a rate-limited model sits out before its next turn. The
+    /// gateway limits under sustained load, and a limit is transient, so the
+    /// model is skipped rather than retired.
     #[serde(default = "default_backoff")]
     pub backoff_secs: f32,
-    #[serde(default = "default_retries")]
-    pub retries: usize,
     pub models: Vec<ModelSpec>,
 }
 
@@ -57,9 +54,6 @@ fn default_strikes() -> usize {
 }
 fn default_backoff() -> f32 {
     60.0
-}
-fn default_retries() -> usize {
-    4
 }
 
 #[derive(Deserialize, Clone)]
@@ -149,38 +143,50 @@ pub fn harvest_cmd(
         .open(corpus)?;
     let mut collected = 0usize;
 
-    for spec in &cfg.models {
-        let have = done.iter().filter(|(f, _)| *f == spec.family).count();
-        if have >= spec.target {
-            println!("{:<14} {have}/{} done", spec.family, spec.target);
-            continue;
-        }
-        let mut strikes = 0usize;
-        for p in pending(&battery, &done, &spec.family, spec.target) {
+    // Round-robin, not one model at a time. Two reasons, both from a live run.
+    // A rate-limited model used to block every model below it in the list, so
+    // one busy provider starved the whole battery. And consecutive requests to
+    // the same provider are what trigger the limit in the first place, so
+    // alternating is gentler on the endpoint as well as faster overall.
+    let mut queues: Vec<Vec<&Prompt>> = cfg
+        .models
+        .iter()
+        .map(|m| pending(&battery, &done, &m.family, m.target))
+        .collect();
+    let mut strikes = vec![0usize; cfg.models.len()];
+    let mut cooling: Vec<Option<Instant>> = vec![None; cfg.models.len()];
+    for (spec, q) in cfg.models.iter().zip(&queues) {
+        println!("{:<20} {} owed", spec.family, q.len());
+    }
+
+    'outer: loop {
+        let mut asked = false;
+        let mut waiting = false;
+        for i in 0..cfg.models.len() {
             if collected >= cfg.per_run {
-                println!(
-                    "\nper-run budget of {} reached, stopping cleanly",
-                    cfg.per_run
-                );
-                return Ok(());
+                println!("\nper-run budget of {} reached", cfg.per_run);
+                break 'outer;
             }
-            if strikes >= cfg.strikes {
-                println!(
-                    "{:<14} {} failures in a row, skipping for this run",
-                    spec.family, strikes
-                );
-                break;
+            if queues[i].is_empty() || strikes[i] >= cfg.strikes {
+                continue;
             }
+            // A cooling model is not a failed one, it just is not this turn's.
+            if cooling[i].is_some_and(|t| Instant::now() < t) {
+                waiting = true;
+                continue;
+            }
+            let spec = &cfg.models[i];
+            let p = queues[i].remove(0);
+            asked = true;
 
             if dry_run {
-                println!("would ask {} for {}", spec.model, &p.prompt_id);
+                println!("would ask {} for {}", spec.model, p.prompt_id);
                 collected += 1;
-                done.insert((spec.family.clone(), p.prompt_id.clone()));
                 continue;
             }
 
             let started = Instant::now();
-            match ask_with_backoff(&cfg, spec, &p.prompt) {
+            match ask(&cfg, spec, &p.prompt) {
                 Ok((text, upstream)) if !text.trim().is_empty() => {
                     let line = serde_json::to_string(&Sample {
                         family: &spec.family,
@@ -194,18 +200,28 @@ pub fn harvest_cmd(
                     })?;
                     writeln!(file, "{line}")?;
                     file.flush()?;
-                    done.insert((spec.family.clone(), p.prompt_id.clone()));
                     collected += 1;
-                    strikes = 0;
+                    strikes[i] = 0;
+                    cooling[i] = None;
                     print!(".");
                     std::io::stdout().flush().ok();
                 }
+                Err(e) if is_rate_limit(&e) => {
+                    // Put the prompt back and come round again later. Not a
+                    // strike: a rate limit says "later", not "broken".
+                    queues[i].insert(0, p);
+                    cooling[i] = Some(Instant::now() + Duration::from_secs_f32(cfg.backoff_secs));
+                    eprintln!(
+                        "\n{} rate limited, cooling {:.0}s",
+                        spec.model, cfg.backoff_secs
+                    );
+                }
                 Ok(_) => {
-                    strikes += 1;
+                    strikes[i] += 1;
                     eprintln!("\n{}: empty response", spec.model);
                 }
                 Err(e) => {
-                    strikes += 1;
+                    strikes[i] += 1;
                     eprintln!("\n{}: {e}", spec.model);
                 }
             }
@@ -217,32 +233,22 @@ pub fn harvest_cmd(
                 std::thread::sleep(target - elapsed);
             }
         }
+        if !asked && !waiting {
+            break; // everything is done or retired
+        }
+        if !asked {
+            // Every remaining model is cooling. Wait rather than spin.
+            std::thread::sleep(Duration::from_secs(5));
+        }
+    }
+
+    for (i, spec) in cfg.models.iter().enumerate() {
+        if strikes[i] >= cfg.strikes {
+            println!("{:<20} retired after {} failures", spec.family, strikes[i]);
+        }
     }
     println!("\ncollected {collected} samples this run");
     Ok(())
-}
-
-/// Ask, waiting out rate limits. Only a non-429 failure counts as a strike:
-/// a 429 means "later", not "broken", and the whole point of a slow drip is
-/// that it can afford to wait.
-fn ask_with_backoff(
-    cfg: &Config,
-    spec: &ModelSpec,
-    prompt: &str,
-) -> Result<(String, String), Error> {
-    for attempt in 0..=cfg.retries {
-        match ask(cfg, spec, prompt) {
-            Err(e) if is_rate_limit(&e) && attempt < cfg.retries => {
-                // Linear, not exponential. The limit is a refill window rather
-                // than congestion, so doubling just wastes the window.
-                let wait = cfg.backoff_secs * (attempt + 1) as f32;
-                eprintln!("\n{} rate limited, waiting {wait:.0}s", spec.model);
-                std::thread::sleep(Duration::from_secs_f32(wait));
-            }
-            other => return other,
-        }
-    }
-    Err("retries exhausted".into())
 }
 
 fn is_rate_limit(e: &Error) -> bool {
