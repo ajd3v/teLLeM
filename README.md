@@ -99,13 +99,32 @@ points depending on where the word cap sits, and roughly 100 to 130 held-out
 samples per era puts the 95% interval near 5 points on its own. The direction
 is consistent across all four settings and the magnitude is not trustworthy.
 
-Two things that table is worth reading for anyway. Capping length costs about
-four points in BOTH eras, so a chunk of any untruncated attribution number is
-the classifier reading how much a model says rather than how it says it. That
-is why `eval` takes `--truncate`. And the 2026 pair loses samples as the cap
-rises, because gemini-3-flash answers in a median of 72 words against
-claude-sonnet-4-6's 238, so the higher caps quietly select for its wordiest
-replies. Read the 40 and 60 rows before the 100 row.
+Capping length costs about four points in BOTH eras, so some of any
+untruncated attribution number is the classifier reading how much a model says
+rather than how it says it. That is why `eval` takes `--truncate`. The two rows
+answer different questions: uncapped includes verbosity as part of the
+fingerprint, capped isolates word and structure choice. Neither is the honest
+one, they are honest about different things.
+
+Verbosity belongs in that fingerprint, because it turns out to be the single
+biggest thing that changed. On identical prompts, gemini-1.5-pro wrote a median
+of 446 words and gemini-3-flash writes 72.
+
+That number needed a control before it could be believed, since a harvester
+that asks differently would produce it artificially.
+`scripts/replication-check.py` harvests `gh/gpt-4o-2024-08-06`, the exact model
+in the reference corpus, through our own pipeline:
+
+| | median words |
+|---|---|
+| our harvest, 2026 | 414 |
+| locuslab, 2024 | 428 |
+
+A ratio of 1.04 on the same model, so the harvests are comparable and the
+terseness is the models rather than us. It also means the 2026 pair loses
+samples as the word cap rises, because gemini's replies are short, so the
+higher caps quietly select for its wordiest ones. Read the 40 and 60 rows
+before the 100 row.
 
 ## Benchmarks (honest numbers)
 
