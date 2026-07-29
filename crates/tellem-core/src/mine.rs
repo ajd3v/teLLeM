@@ -12,6 +12,12 @@ use std::collections::{BTreeMap, HashMap};
 
 use serde::{Deserialize, Serialize};
 
+/// The rejection class. Text that looks like none of the catalogued models
+/// lands here, and `who` reports no catalog match rather than naming the least
+/// bad fit. Without it a five-way softmax must pick one of five, whatever it is
+/// shown: on 30k human texts that produced a 45% false positive rate.
+pub const UNMATCHED: &str = "unmatched";
+
 /// One labelled corpus sample.
 pub struct Sample<'a> {
     pub family: &'a str,

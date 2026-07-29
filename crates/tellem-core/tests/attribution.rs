@@ -87,3 +87,34 @@ fn fitting_is_deterministic() {
         }
     }
 }
+
+#[test]
+fn the_rejection_class_is_never_a_call() {
+    // Closed-set softmax always sums to one, so without a rejection option the
+    // classifier must name one of the families whatever it is shown. On 30k
+    // human texts that produced a 45% false positive rate. UNMATCHED ranking
+    // first is a refusal, at any confidence.
+    let mut c = corpus();
+    for i in 0..60 {
+        c.push((
+            tellem_core::mine::UNMATCHED.to_string(),
+            format!("qwix zorbal {i} frimble wanture. Blenk sprocketing vun."),
+        ));
+    }
+    let cat = fit(&c, 200, 8);
+    let a = cat.who("qwix frimble blenk sprocketing vun zorbal", 0.0, 1);
+    assert_eq!(
+        a.ranked[0].family,
+        tellem_core::mine::UNMATCHED,
+        "{:?}",
+        a.ranked
+    );
+    assert_eq!(a.call, None, "named a family on out-of-catalog text");
+    // A real member of the catalog still gets called.
+    let b = cat.who(
+        "Moreover the pipeline is robust. Furthermore throughput scales.",
+        0.5,
+        1,
+    );
+    assert_eq!(b.call.as_deref(), Some("alpha"), "{:?}", b.ranked);
+}

@@ -8,7 +8,7 @@ use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
-use tellem_core::mine::Catalog;
+use tellem_core::mine::{Catalog, UNMATCHED};
 use tellem_core::train::fit;
 use tellem_core::Error;
 
@@ -120,11 +120,17 @@ pub fn eval_cmd(
     floor: f32,
     holdout: u64,
     epochs: usize,
+    negatives_path: Option<&Path>,
 ) -> Result<(), Error> {
     let records = read_corpus(corpus)?;
-    let (train, test): (Vec<&Record>, Vec<&Record>) = records
-        .iter()
-        .partition(|r| bucket(&r.prompt_id) % 100 >= holdout);
+    let (train, test): (Vec<&Record>, Vec<&Record>) = records.iter().partition(|r| {
+        let key = if r.prompt_id.is_empty() {
+            &r.text
+        } else {
+            &r.prompt_id
+        };
+        bucket(key) % 100 >= holdout
+    });
     println!(
         "corpus {} samples: {} train, {} held out (split by prompt)",
         records.len(),
@@ -157,6 +163,11 @@ pub fn eval_cmd(
         })
         .collect();
 
+    // Held-out rejection rows are the out-of-catalog control, not test cases.
+    let (scored, mut control): (Vec<_>, Vec<_>) = scored
+        .into_iter()
+        .partition(|(truth, _, _)| truth != UNMATCHED);
+
     let correct = scored
         .iter()
         .filter(|(t, p, _)| p.as_deref() == Some(t))
@@ -172,7 +183,10 @@ pub fn eval_cmd(
     let mut steps: Vec<f32> = (0..=99).map(|i| i as f32 * 0.01).collect();
     steps.dedup();
     for m in steps {
-        let called: Vec<_> = scored.iter().filter(|(_, _, mg)| *mg >= m).collect();
+        let called: Vec<_> = scored
+            .iter()
+            .filter(|(_, p, mg)| *mg >= m && p.as_deref() != Some(UNMATCHED))
+            .collect();
         if called.is_empty() {
             break;
         }
@@ -192,6 +206,33 @@ pub fn eval_cmd(
         if chosen.is_none() && precision >= floor {
             chosen = Some((m, precision, coverage));
         }
+    }
+
+    // Out-of-catalog control. Every call on it is a false positive, and that is
+    // the failure that would actually matter: someone pastes their own writing
+    // and gets named a model.
+    if let Some(path) = negatives_path {
+        for r in read_corpus(path)? {
+            let a = catalog.who(&r.text, 0.0, 0);
+            control.push((
+                UNMATCHED.to_string(),
+                a.ranked.first().map(|c| c.family.clone()),
+                a.confidence,
+            ));
+        }
+    }
+    if let (false, Some((m, _, _))) = (control.is_empty(), chosen) {
+        let called = control
+            .iter()
+            .filter(|(_, p, c)| *c >= m && p.as_deref() != Some(UNMATCHED))
+            .count();
+        println!(
+            "\nout-of-catalog control: {} held-out texts that are none of the \
+             families, {} called at threshold {m:.2} ({:.1}% false positive)",
+            control.len(),
+            called,
+            100.0 * called as f32 / control.len() as f32
+        );
     }
 
     match chosen {

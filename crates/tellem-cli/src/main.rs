@@ -72,6 +72,9 @@ enum Cmd {
         /// Percent of prompts held out
         #[arg(long, default_value_t = 20)]
         holdout: u64,
+        /// Out-of-catalog text (human writing). Every call on it is a false positive.
+        #[arg(long)]
+        negatives: Option<PathBuf>,
     },
 }
 
@@ -149,7 +152,8 @@ fn run() -> Result<(), tellem_core::Error> {
             floor,
             holdout,
             epochs,
-        } => attribute_cmd::eval_cmd(&corpus, top_k, floor, holdout, epochs)?,
+            negatives,
+        } => attribute_cmd::eval_cmd(&corpus, top_k, floor, holdout, epochs, negatives.as_deref())?,
         Cmd::Fix { file, pack, write } => {
             let text = read_input(&file)?;
             let fixed = engine(&pack)?.fix(&text);

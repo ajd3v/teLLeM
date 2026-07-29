@@ -56,14 +56,21 @@ on both sides), corpus is locuslab/llm-idiosyncrasies, late-2024 models:
 
 | | |
 |---|---|
-| forced choice, no abstention | 88.9% |
-| at the 95% precision floor | 95.1% precision, 83.6% coverage |
-| at 0.90 confidence | 98.7% precision, 67.6% coverage |
+| forced choice, no abstention | 88.5% |
+| at the 95% precision floor | 95.0% precision, 84.3% coverage |
+| false positives on 32,523 out-of-catalog texts | 3.5% |
 
 The threshold is derived, never hand-picked. Precision is the invariant and
 coverage is whatever falls out of it, so `who` refuses on about one text in six
 rather than guessing. Every call prints the features that decided it, with the
 family rate against the corpus baseline.
+
+The catalog carries a rejection class, and a text that ranks into it gets no
+catalog match at any confidence. This is load-bearing rather than decorative: a
+five-way softmax sums to one, so without a rejection option the classifier must
+name one of five whatever it is shown, and it named a model for 45% of genuine
+human writing. With the rejection class that falls to 0.9% on human text and
+3.5% across a control that is mostly 27 uncatalogued models.
 
 Naive Bayes was tried first and reached 72.7% forced choice, clearing the floor
 only at 34% coverage. Logistic regression on the same features is still a dot

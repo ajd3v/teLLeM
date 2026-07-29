@@ -9,7 +9,7 @@
 
 use serde::Serialize;
 
-use crate::mine::Catalog;
+use crate::mine::{Catalog, UNMATCHED};
 use crate::train::vectorize;
 
 #[derive(Serialize, Debug, Clone)]
@@ -92,7 +92,11 @@ impl Catalog {
             [a, b, ..] => a.1.probability - b.1.probability,
             _ => 0.0,
         };
-        let call = (x.len() >= min_matched && confidence >= min_confidence && !ranked.is_empty())
+        // Ranking the rejection class first is a refusal, at any confidence.
+        let call = (x.len() >= min_matched
+            && confidence >= min_confidence
+            && !ranked.is_empty()
+            && ranked[0].1.family != UNMATCHED)
             .then(|| ranked[0].1.family.clone());
 
         let receipts = match (&call, ranked.len()) {
