@@ -35,7 +35,19 @@ session needs to start building without re-deriving context.
  far. It immediately showed two word swaps producing broken English ("a many
  of possibilities", "a sign to synergy"), now fixed by P042 and P043. Run the
  bench against real prose before trusting a new swap rule.
-- who / harvest / mine (M3) not started.
+- M3 PARTLY SHIPPED (2026-07-28): mine / who / eval work and clear the
+ pre-registered gate. 95.0% precision at 84.3% coverage, 88.5% forced choice,
+ 3.5% false positives on 32,523 out-of-catalog texts. Corpus is
+ locuslab/llm-idiosyncrasies (MIT), five commercial families from LATE 2024,
+ plus MAGE human text as the rejection class. Naive Bayes was the spec's
+ choice and could not reach the floor (72.7%), logistic regression can and is
+ still a dot product, so receipts still print.
+ NOT done: the harvester. It is blocked on gateway auth, see below.
+- site/ is tellem.gainful.work, watercolour, all three verbs client side.
+ Needs a DNS record before deploy/push.sh will do anything.
+- GATEWAY IS DOWN as of 2026-07-28 and blocks every remaining M3 step: cx 401
+ token expired, xai 403 bad credentials, gemini-cli 404, ag/claude returns an
+ empty body. Re-auth those before touching harvest.
 - Name: **teLLeM** (display + repo, github.com/ajd3v/teLLeM, created 2026-07-22
  as PRIVATE, flip to public at M1 publishable).
  Crates stay lowercase tellem-*. Local folder: ~/Projects/ajd3v/teLLeM (owner renamed from tell-em).
