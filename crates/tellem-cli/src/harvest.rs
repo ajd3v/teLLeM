@@ -35,6 +35,14 @@ pub struct Config {
     /// Give up on a model for this run after this many consecutive failures.
     #[serde(default = "default_strikes")]
     pub strikes: usize,
+    /// How long to wait out a 429 before retrying the same prompt, and how
+    /// many times. The gateway rate limits under sustained load, and a rate
+    /// limit is transient, so retiring the model over one is throwing away
+    /// samples that were about to be available.
+    #[serde(default = "default_backoff")]
+    pub backoff_secs: f32,
+    #[serde(default = "default_retries")]
+    pub retries: usize,
     pub models: Vec<ModelSpec>,
 }
 
@@ -46,6 +54,12 @@ fn default_budget() -> usize {
 }
 fn default_strikes() -> usize {
     3
+}
+fn default_backoff() -> f32 {
+    60.0
+}
+fn default_retries() -> usize {
+    4
 }
 
 #[derive(Deserialize, Clone)]
@@ -166,7 +180,7 @@ pub fn harvest_cmd(
             }
 
             let started = Instant::now();
-            match ask(&cfg, spec, &p.prompt) {
+            match ask_with_backoff(&cfg, spec, &p.prompt) {
                 Ok((text, upstream)) if !text.trim().is_empty() => {
                     let line = serde_json::to_string(&Sample {
                         family: &spec.family,
@@ -206,6 +220,34 @@ pub fn harvest_cmd(
     }
     println!("\ncollected {collected} samples this run");
     Ok(())
+}
+
+/// Ask, waiting out rate limits. Only a non-429 failure counts as a strike:
+/// a 429 means "later", not "broken", and the whole point of a slow drip is
+/// that it can afford to wait.
+fn ask_with_backoff(
+    cfg: &Config,
+    spec: &ModelSpec,
+    prompt: &str,
+) -> Result<(String, String), Error> {
+    for attempt in 0..=cfg.retries {
+        match ask(cfg, spec, prompt) {
+            Err(e) if is_rate_limit(&e) && attempt < cfg.retries => {
+                // Linear, not exponential. The limit is a refill window rather
+                // than congestion, so doubling just wastes the window.
+                let wait = cfg.backoff_secs * (attempt + 1) as f32;
+                eprintln!("\n{} rate limited, waiting {wait:.0}s", spec.model);
+                std::thread::sleep(Duration::from_secs_f32(wait));
+            }
+            other => return other,
+        }
+    }
+    Err("retries exhausted".into())
+}
+
+fn is_rate_limit(e: &Error) -> bool {
+    let s = e.to_string();
+    s.contains("429") || s.to_lowercase().contains("rate limit")
 }
 
 fn ask(cfg: &Config, spec: &ModelSpec, prompt: &str) -> Result<(String, String), Error> {

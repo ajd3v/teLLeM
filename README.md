@@ -77,6 +77,26 @@ only at 34% coverage. Logistic regression on the same features is still a dot
 product, so every contribution still prints. Explainability was the constraint,
 not the specific classifier.
 
+### Does a fingerprint survive a model generation?
+
+The catalog is built from late-2024 models, and everything frontier since has
+been tuned harder toward the same register, so the obvious worry is that the
+signal has flattened. `scripts/era-compare.py` holds everything fixed except
+the era: same two vendors, same prompt ids, same sample count, same two-class
+task.
+
+| | forced choice | at the 95% floor |
+|---|---|---|
+| 2024, claude-3-5-sonnet against gemini-1.5-pro | 93.8% | 96.9% coverage |
+| 2026, claude-sonnet-4-6 against gemini-3-flash | 90.6% | 82.8% coverage |
+
+The fingerprints survive. Across four holdout splits the 2026 pair came out
+about four points harder in three of them, which points the way you would
+expect, but roughly 130 held-out samples per era puts the 95% interval near
+five points. The gap is suggestive and it is not significant. Read it as
+"still works, watch this number as the catalog refreshes", not as a measured
+rate of decay.
+
 ## Benchmarks (honest numbers)
 
 criterion, single thread, base pack, 1.2 MB of prose:
