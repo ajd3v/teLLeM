@@ -209,8 +209,13 @@ pub fn harvest_cmd(
 }
 
 fn ask(cfg: &Config, spec: &ModelSpec, prompt: &str) -> Result<(String, String), Error> {
+    // stream:false is not optional. Several gateway backends stream by
+    // default and answer with SSE chunks, which parse as neither JSON nor an
+    // error, so a harvester without this silently records every one of them as
+    // a failure.
     let body = serde_json::json!({
         "model": spec.model,
+        "stream": false,
         "messages": [{ "role": "user", "content": prompt }],
         "max_tokens": 1024,
     });

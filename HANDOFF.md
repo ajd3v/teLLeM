@@ -48,9 +48,19 @@ session needs to start building without re-deriving context.
  is safe to interrupt and safe to re-run, so put it on a cron slice.
 - site/ is tellem.gainful.work, watercolour, all three verbs client side.
  Needs a DNS record before deploy/push.sh will do anything.
-- GATEWAY IS DOWN as of 2026-07-28 and blocks every remaining M3 step: cx 401
- token expired, xai 403 bad credentials, gemini-cli 404, ag/claude returns an
- empty body. Re-auth those before touching harvest.
+- GATEWAY, corrected 2026-07-28 after actually retesting. FOUR of six families
+ work right now and harvesting can start today: claude-4 (ag/claude-sonnet-4-6),
+ gemini-3 (ag/gemini-3-flash), gpt-oss (ag/gpt-oss-120b-medium), and
+ deepseek-flash (OpenCodeDeepSeek, free tier, returns empty bodies often).
+ Only TWO are genuinely blocked on credentials: cx/gpt-5.5 gives 401 token
+ expired, xai/grok-4 gives 403 OAuth2 bad credentials.
+ The earlier "gateway is down across the board" note was wrong twice over.
+ ag/* backends stream by default, so a probe that parses plain JSON reads a
+ working model as an empty body: send stream:false. And gc/gemini-3-pro-preview
+ 404s because that model id does not exist, not because of auth. Five other
+ gemini aliases answer fine.
+ Prefer model ids whose upstream reports a specific version. ag/gemini-3.5-flash-low
+ answers as "gemini-default", which cannot be audited later.
 - Name: **teLLeM** (display + repo, github.com/ajd3v/teLLeM, created 2026-07-22
  as PRIVATE, flip to public at M1 publishable).
  Crates stay lowercase tellem-*. Local folder: ~/Projects/ajd3v/teLLeM (owner renamed from tell-em).
