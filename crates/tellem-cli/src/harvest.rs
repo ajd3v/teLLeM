@@ -35,6 +35,11 @@ pub struct Config {
     /// Give up on a model for this run after this many consecutive failures.
     #[serde(default = "default_strikes")]
     pub strikes: usize,
+    /// Seconds to wait for one response. Reasoning models think before they
+    /// answer and 145s has been measured on a real one, so the default that
+    /// suits a chat model retires them as failures when they were working.
+    #[serde(default = "default_timeout")]
+    pub timeout_secs: u64,
     /// How long a rate-limited model sits out before its next turn. The
     /// gateway limits under sustained load, and a limit is transient, so the
     /// model is skipped rather than retired.
@@ -54,6 +59,9 @@ fn default_strikes() -> usize {
 }
 fn default_backoff() -> f32 {
     60.0
+}
+fn default_timeout() -> u64 {
+    420
 }
 
 #[derive(Deserialize, Clone)]
@@ -271,7 +279,7 @@ fn ask(cfg: &Config, spec: &ModelSpec, prompt: &str) -> Result<(String, String),
         "{}/chat/completions",
         cfg.base_url.trim_end_matches('/')
     ))
-    .timeout(Duration::from_secs(180));
+    .timeout(Duration::from_secs(cfg.timeout_secs));
     if !cfg.api_key.is_empty() {
         req = req.set("Authorization", &format!("Bearer {}", cfg.api_key));
     }
