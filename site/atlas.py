@@ -13,7 +13,7 @@ import pathlib
 import re
 import sys
 
-feature = sys.argv[1] if len(sys.argv) > 1 else 'w:delve'
+feature = sys.argv[1] if len(sys.argv) > 1 else 'w:honest'
 site = pathlib.Path(__file__).parent
 catalog = site / 'tellem' / 'catalog.toml'
 text = catalog.read_text()

@@ -9,7 +9,7 @@ const ROOT = process.env.SITE_ROOT ?? new URL('.', import.meta.url).pathname;
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript',
   '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.woff2': 'font/woff2',
-  '.toml': 'text/plain; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
+  '.json': 'application/json', '.toml': 'text/plain; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
 };
 
 createServer((req, res) => {
