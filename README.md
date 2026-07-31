@@ -77,54 +77,54 @@ only at 34% coverage. Logistic regression on the same features is still a dot
 product, so every contribution still prints. Explainability was the constraint,
 not the specific classifier.
 
-### Does a fingerprint survive a model generation?
+### A 2026 catalog
 
-The catalog is built from late-2024 models and everything frontier since has
-been tuned harder toward the same register, so the worry is that the signal has
-flattened. `scripts/era-compare.py` holds everything fixed except the era: same
-two vendors, same prompt ids, same sample count, same two-class task.
+Four families harvested through the local gateway at about 300 samples each,
+plus the rejection class. Held out by prompt, threshold derived by `eval`:
 
-| word cap | 2024, claude-3-5-sonnet vs gemini-1.5-pro | 2026, claude-sonnet-4-6 vs gemini-3-flash |
-|---|---|---|
-| none | 93.8% | 90.6% |
-| 100 | 95.5% | 85.6% |
-| 60 | 89.8% | 86.5% |
-| 40 | 90.2% | 81.0% |
-
-**The fingerprints survive.** Every setting lands far above the 50% a coin
-would get, so two generations of tuning have not erased the signal.
-
-**How much harder 2026 is, this data cannot say.** The gap runs from 3 to 10
-points depending on where the word cap sits, and roughly 100 to 130 held-out
-samples per era puts the 95% interval near 5 points on its own. The direction
-is consistent across all four settings and the magnitude is not trustworthy.
-
-Capping length costs about four points in BOTH eras, so some of any
-untruncated attribution number is the classifier reading how much a model says
-rather than how it says it. That is why `eval` takes `--truncate`. The two rows
-answer different questions: uncapped includes verbosity as part of the
-fingerprint, capped isolates word and structure choice. Neither is the honest
-one, they are honest about different things.
-
-Verbosity belongs in that fingerprint, because it turns out to be the single
-biggest thing that changed. On identical prompts, gemini-1.5-pro wrote a median
-of 446 words and gemini-3-flash writes 72.
-
-That number needed a control before it could be believed, since a harvester
-that asks differently would produce it artificially.
-`scripts/replication-check.py` harvests `gh/gpt-4o-2024-08-06`, the exact model
-in the reference corpus, through our own pipeline:
-
-| | median words |
+| | |
 |---|---|
-| our harvest, 2026 | 414 |
-| locuslab, 2024 | 428 |
+| precision at the floor | 95.1% |
+| coverage there | 91.0% |
+| false positives, out of catalog | 1.9% |
 
-A ratio of 1.04 on the same model, so the harvests are comparable and the
-terseness is the models rather than us. It also means the 2026 pair loses
-samples as the word cap rises, because gemini's replies are short, so the
-higher caps quietly select for its wordiest ones. Read the 40 and 60 rows
-before the 100 row.
+It clears the floor on 300 samples per family where the 2024 catalog used
+10,340, which is worth knowing before anyone plans a long harvest.
+
+### Have the models converged?
+
+The assumption going in was yes, and that a 2026 catalog would be harder. The
+data says the question is too coarse to have one answer.
+
+Both eras cut to the same shape, four families at 295 samples plus an equal
+rejection class, and evaluated identically:
+
+| word cap | 2024 | 2026 |
+|---|---|---|
+| none | 95.5% at 46.4% coverage | 95.1% at 91.4% coverage |
+| 120 | 95.7% at 40.8% coverage | 95.7% at 92.5% coverage |
+| 50 | 96.2% at 14.3% coverage | 96.3% at 73.3% coverage |
+
+2026 is far MORE separable, and it survives capping length, so it is not just
+that the newer models differ in how much they say. Restricting to the three
+vendors present in both eras keeps the direction, 84.4% against 89.4% uncapped.
+
+Pairwise is where it gets specific. Two-class, 280 samples each, 50-word cap:
+
+| | 2024 | 2026 |
+|---|---|---|
+| Anthropic against Google | 88.5% | 85.9% |
+| Anthropic against OpenAI | 90.1% | 89.3% |
+| Google against OpenAI | 73.3% | 95.2% |
+
+Anthropic and Google drifted slightly together. Anthropic and OpenAI held
+station. Google and OpenAI, the hardest pair to tell apart in 2024, are now the
+easiest by a wide margin. "Models are converging" is not what happened, and an
+earlier version of this section said 2026 looked slightly harder because the
+two-class test it ran happened to land on the one pair that did converge.
+
+Caveat worth carrying: gemini-3-flash is a faster tier than gemini-1.5-pro, so
+that row compares vendors rather than equivalent tiers.
 
 ## Benchmarks (honest numbers)
 
