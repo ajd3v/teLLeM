@@ -12,6 +12,17 @@
 # Model ids are picked so the endpoint reports a SPECIFIC upstream. Several
 # aliases answer as "gemini-default", which cannot be audited later.
 # Verified working 2026-07-28.
+#
+# `provider` is the SERVING path, not the model's author. The nvidia entries
+# below are third-party models on NVIDIA's hosted inference, so a fingerprint
+# mined from them is that model as NVIDIA serves it. Sampling defaults, an
+# injected system prompt or quantisation can all differ from the same weights
+# served by the lab that made them, and the catalog cannot tell the difference.
+#
+# Provenance is also weaker here than it looks. For cx/* the gateway leaked a
+# real upstream path in an error (codex/gpt-5.4-mini), whereas the nvidia
+# entries just echo the alias back with the prefix stripped, which is not
+# independent evidence of what ran. Treat those labels as claims, not receipts.
 
 base_url = "http://127.0.0.1:20128/v1"
 api_key = ""
@@ -40,19 +51,19 @@ target = 300
 
 [[models]]
 family = "deepseek-v4"
-provider = "deepseek"
+provider = "nvidia"          # NVIDIA-hosted, model authored by DeepSeek
 model = "nvidia/deepseek-ai/deepseek-v4-pro"
 target = 300
 
 [[models]]
 family = "glm"
-provider = "zhipu"
+provider = "nvidia"          # NVIDIA-hosted, model authored by Zhipu (Z.ai)
 model = "nvidia/z-ai/glm-5.2"
 target = 300
 
 [[models]]
 family = "minimax"
-provider = "minimax"
+provider = "nvidia"          # NVIDIA-hosted, model authored by MiniMax
 model = "nvidia/minimaxai/minimax-m3"
 target = 300
 
