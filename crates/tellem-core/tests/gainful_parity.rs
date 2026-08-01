@@ -51,7 +51,7 @@ rationale = "an employer named next to a technology is the role-conflation shape
 id = "G007"
 name = "unhedged-precise-figure"
 kind = "regex"
-pattern = '\$[0-9]+\.[0-9]{2,}|\b[0-9]{1,3},[0-9]{3}(?:,[0-9]{3})*\b|\b[0-9]{4,}\b'
+pattern = '\$[0-9]+\.[0-9]{2,}|\b[0-9]{1,3},[0-9]{3}(?:,[0-9]{3})*\b|\b[0-9]{5,}\b'
 weight = 0.3
 rationale = "a precise figure reads as measured, confirm it is in the resume or a cited corpus item"
 "#;
@@ -200,6 +200,13 @@ mod grounding_shapes {
         // version and in none of the 162 corpus items.
         let t = "That decision cost $0.022 per call on the first 20,000 calls.";
         assert!(ids(t).contains(&"G007".to_string()), "got {:?}", ids(t));
+    }
+
+    #[test]
+    fn spares_a_year() {
+        // "2024" is a year, not a claimed metric. The four-digit form flagged it.
+        let t = "Tracked the HUD data-dictionary rename when the 2024 specification changed.";
+        assert!(!ids(t).contains(&"G007".to_string()), "got {:?}", ids(t));
     }
 
     #[test]

@@ -278,3 +278,43 @@ fn every_rule_can_actually_fire() {
         .collect();
     assert!(dead.is_empty(), "rules that can never match: {dead:?}");
 }
+
+#[test]
+fn the_base_pack_stays_domain_agnostic() {
+    // The pack is for generated prose anywhere. Rules arrived once framed
+    // around one field, because that is the corpus that happened to be in front
+    // of whoever added them, and rationales are published output: a
+    // resume-shaped rationale ships a resume-shaped tool. The words themselves
+    // were fine, the justifications were not.
+    //
+    // A rule that only makes sense in one field belongs in a pack for that
+    // field. G006 and G007 in the platform's voice pack are the example: they
+    // flag employer-and-technology and unhedged figures, which mean nothing
+    // outside an application, and they correctly live there rather than here.
+    const FIELDS: [&str; 8] = [
+        "resume",
+        "cover letter",
+        "cover-letter",
+        "candidate",
+        "hiring",
+        "recruiter",
+        "applicant",
+        "job application",
+    ];
+    let pack = Pack::parse(tellem_core::BASE_PACK).unwrap();
+    let leaked: Vec<(&str, &str)> = pack
+        .rules
+        .iter()
+        .filter_map(|r| {
+            let low = r.rationale.to_lowercase();
+            FIELDS
+                .iter()
+                .find(|f| low.contains(*f))
+                .map(|f| (r.id.as_str(), *f))
+        })
+        .collect();
+    assert!(
+        leaked.is_empty(),
+        "base pack rationales name a single field: {leaked:?}"
+    );
+}

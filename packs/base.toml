@@ -1,6 +1,13 @@
 # teLLeM base rule pack (public, MIT). Seeds: Wikipedia "Signs of AI writing",
 # awesome-slop, antislop-sampler, slop-gate, and the gainful deAi pass.
 # Owner-specific rules (roles to jobs, semicolon ban) live in private packs.
+#
+# SCOPE: this pack is domain-agnostic. A rule belongs here when the tell shows
+# up in generated prose generally, and a rationale must justify it that way. If
+# the only reason a rule exists is one field (job applications, academic
+# abstracts, marketing email), it belongs in a pack for that field, not here.
+# Rationales are published output, so a resume-shaped rationale ships a
+# resume-shaped tool.
 
 [meta]
 name = "base"
@@ -67,7 +74,7 @@ id = "T010"
 name = "architected"
 kind = "word"
 weight = 1.0
-rationale = "architect as a verb is resume-generator dialect"
+rationale = "architect as a verb is inflation for built"
 [rules.swaps]
 architected = "built"
 architecting = "building"
@@ -117,7 +124,7 @@ id = "T014"
 name = "showcase"
 kind = "word"
 weight = 1.0
-rationale = "showcase as a verb is portfolio-generator dialect"
+rationale = "showcase as a verb is promotional register for show"
 [rules.swaps]
 showcase = "show"
 showcases = "shows"
@@ -747,9 +754,9 @@ replace = "a sign of"
 weight = 1.0
 rationale = "a testament to is a canonical model formula, and sign takes of, not to"
 
-# ---------- Added 2026-07-31: tells the pack missed, found while linting
-# résumé and cover-letter prose. Enthusiasm adjectives and hiring-cliche
-# phrases dominate application writing and none of them were covered.
+# ---------- Added 2026-07-31: performed enthusiasm and credential cliches.
+# Both classes turn up wherever prose is trying to impress a reader, which is
+# most generated writing, and neither was covered.
 
 [[rules]]
 id = "T053"
@@ -757,7 +764,7 @@ name = "passionate"
 kind = "word"
 patterns = ["passionate", "passionately"]
 weight = 0.9
-rationale = "passionate about is the single most common cover-letter tell. Flag only: deleting the adjective leaves broken grammar, the writer picks the replacement"
+rationale = "passionate about is claimed enthusiasm standing in for a reason. Flag only: deleting the adjective leaves broken grammar, the writer picks the replacement"
 
 [[rules]]
 id = "T054"
@@ -790,7 +797,7 @@ name = "proven-track-record"
 kind = "phrase"
 patterns = ["proven track record", "a track record of success", "demonstrated track record"]
 weight = 1.0
-rationale = "proven track record is the canonical resume cliche and asserts nothing checkable"
+rationale = "proven track record asserts nothing checkable, it is credibility by assertion"
 
 [[rules]]
 id = "P045"
@@ -798,7 +805,7 @@ name = "hit-the-ground-running"
 kind = "phrase"
 patterns = ["hit the ground running", "ready to hit the ground"]
 weight = 1.0
-rationale = "hiring-cliche filler, says nothing about what the candidate can do"
+rationale = "filler that claims readiness without naming a single thing the writer can do"
 
 [[rules]]
 id = "P046"
@@ -807,7 +814,7 @@ kind = "phrase"
 patterns = ["spearheaded", "spearheading", "spearhead"]
 replace = "led"
 weight = 0.8
-rationale = "spearheaded is resume inflation for led"
+rationale = "spearheaded is inflation for led"
 
 [[rules]]
 id = "P047"
