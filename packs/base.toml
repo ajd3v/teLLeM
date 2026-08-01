@@ -746,3 +746,71 @@ patterns = ["a testament to", "is testament to"]
 replace = "a sign of"
 weight = 1.0
 rationale = "a testament to is a canonical model formula, and sign takes of, not to"
+
+# ---------- Added 2026-07-31: tells the pack missed, found while linting
+# résumé and cover-letter prose. Enthusiasm adjectives and hiring-cliche
+# phrases dominate application writing and none of them were covered.
+
+[[rules]]
+id = "T053"
+name = "passionate"
+kind = "word"
+weight = 0.9
+rationale = "passionate about is the single most common cover-letter tell. Flag only: deleting the adjective leaves broken grammar, the writer picks the replacement"
+
+[[rules]]
+id = "T054"
+name = "thrilled"
+kind = "word"
+weight = 0.8
+rationale = "thrilled and excited to announce are performed enthusiasm, not writing"
+[rules.swaps]
+thrilled = "glad"
+
+[[rules]]
+id = "T055"
+name = "robust"
+kind = "word"
+weight = 0.7
+rationale = "robust is a filler adjective, name the property instead (fast, tested, fault-tolerant). Flag only: robust statistics is a term of art, an auto-swap changes meaning"
+
+[[rules]]
+id = "T056"
+name = "dynamic-adjective"
+kind = "regex"
+pattern = '(?i)\bdynamic (?:team|environment|role|individual|professional|company)\b'
+weight = 0.7
+rationale = "a dynamic team says nothing, it is filler around the noun"
+
+[[rules]]
+id = "P044"
+name = "proven-track-record"
+kind = "phrase"
+patterns = ["proven track record", "a track record of success", "demonstrated track record"]
+weight = 1.0
+rationale = "proven track record is the canonical resume cliche and asserts nothing checkable"
+
+[[rules]]
+id = "P045"
+name = "hit-the-ground-running"
+kind = "phrase"
+patterns = ["hit the ground running", "ready to hit the ground"]
+weight = 1.0
+rationale = "hiring-cliche filler, says nothing about what the candidate can do"
+
+[[rules]]
+id = "P046"
+name = "spearhead"
+kind = "phrase"
+patterns = ["spearheaded", "spearheading", "spearhead"]
+replace = "led"
+weight = 0.8
+rationale = "spearheaded is resume inflation for led"
+
+[[rules]]
+id = "P047"
+name = "wide-range-of"
+kind = "phrase"
+patterns = ["a wide range of", "a broad range of", "a diverse range of"]
+weight = 0.6
+rationale = "vague quantifier standing in for the actual list"
