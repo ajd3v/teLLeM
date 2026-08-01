@@ -257,3 +257,24 @@ fn html_markup_is_not_prose() {
         r#"<a href="/x" class="leverage">We use it.</a>"#
     );
 }
+
+#[test]
+fn every_rule_can_actually_fire() {
+    // A word or phrase rule with neither `patterns` nor `swaps` compiles fine,
+    // loads fine, and matches nothing forever. Two flag-only rules shipped that
+    // way: the author dropped the swaps to stop the rewrite, which also removed
+    // the only thing the matcher had to look for. Nothing else notices, because
+    // a rule that never fires produces no output to be wrong.
+    let pack = Pack::parse(tellem_core::BASE_PACK).unwrap();
+    let dead: Vec<&str> = pack
+        .rules
+        .iter()
+        .filter(|r| match r.kind {
+            tellem_core::Kind::Word => r.patterns.is_empty() && r.swaps.is_empty(),
+            tellem_core::Kind::Phrase => r.patterns.is_empty(),
+            tellem_core::Kind::Regex => r.pattern.is_none(),
+        })
+        .map(|r| r.id.as_str())
+        .collect();
+    assert!(dead.is_empty(), "rules that can never match: {dead:?}");
+}

@@ -755,6 +755,7 @@ rationale = "a testament to is a canonical model formula, and sign takes of, not
 id = "T053"
 name = "passionate"
 kind = "word"
+patterns = ["passionate", "passionately"]
 weight = 0.9
 rationale = "passionate about is the single most common cover-letter tell. Flag only: deleting the adjective leaves broken grammar, the writer picks the replacement"
 
@@ -771,6 +772,7 @@ thrilled = "glad"
 id = "T055"
 name = "robust"
 kind = "word"
+patterns = ["robust"]
 weight = 0.7
 rationale = "robust is a filler adjective, name the property instead (fast, tested, fault-tolerant). Flag only: robust statistics is a term of art, an auto-swap changes meaning"
 
