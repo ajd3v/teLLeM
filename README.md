@@ -1,7 +1,21 @@
 # teLLeM
 
 AI-text forensics with receipts. Every finding cites the rule that fired,
-confidence is stated honestly, and below threshold it refuses to guess.
+confidence is stated honestly, and below threshold it declines to judge.
+
+**Try it at [tellem.alanj.dev](https://tellem.alanj.dev)**, where the whole
+engine runs in your browser via WebAssembly and nothing you paste leaves the
+page.
+
+Most AI detectors return a percentage you have to take on faith. teLLeM does
+the opposite. It names each tell it found, quotes the span, and cites the rule
+and the evidence behind that rule, so you can argue with any individual
+finding. It reports a density and a band rather than a human-or-machine
+verdict, because individual tells are weak and clustering is the only real
+signal. Detection you can argue with is the only detection worth publishing.
+
+One Rust rule engine ships to three targets: a CLI, a WebAssembly build for
+the browser, and a Node addon.
 
 ```
 tellem lint <file>   # find AI tells, cite each one
@@ -61,7 +75,7 @@ on both sides), corpus is locuslab/llm-idiosyncrasies, late-2024 models:
 | false positives on 32,523 out-of-catalog texts | 3.5% |
 
 The threshold is derived, never hand-picked. Precision is the invariant and
-coverage is whatever falls out of it, so `who` refuses on about one text in six
+coverage is whatever falls out of it, so `who` declines about one text in six
 rather than guessing. Every call prints the features that decided it, with the
 family rate against the corpus baseline.
 
@@ -147,4 +161,4 @@ than it guesses.
 
 ## License
 
-MIT
+MIT. Built by [Alan De Vaney](https://alanj.dev).

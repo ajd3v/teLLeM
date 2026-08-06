@@ -13,6 +13,12 @@ const MIME = {
 };
 
 createServer((req, res) => {
+  // canonical home moved to tellem.alanj.dev; the old host 301s there
+  const host = String(req.headers.host || '').split(':')[0];
+  if (host === 'tellem.gainful.work') {
+    res.writeHead(301, { Location: 'https://tellem.alanj.dev' + req.url });
+    return res.end();
+  }
   let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (path === '/healthz') {
     res.writeHead(200, { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' });

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Deploy the teLLeM site container. Runs ON the box, same pattern as ajd3v-site.
-# Prerequisite the owner does once: a DNS record for tellem.gainful.work
-# pointing at this host. Traefik gets the cert on first request.
+# Prerequisite the owner does once: DNS records for tellem.alanj.dev (canonical)
+# and tellem.gainful.work (301s to canonical) pointing at this host. Traefik gets the cert on first request.
 set -euo pipefail
 cd /home/deploy/tellem-site
 
 docker build -q -t tellem-site -f deploy/Dockerfile .
 docker rm -f tellem-site 2>/dev/null || true
 
-HOST_RULE='Host(`tellem.gainful.work`)'
+HOST_RULE='Host(`tellem.alanj.dev`) || Host(`tellem.gainful.work`)'
 docker run -d --name tellem-site --restart unless-stopped --network coolify \
   -l traefik.enable=true \
   -l traefik.docker.network=coolify \
