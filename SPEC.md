@@ -185,7 +185,7 @@ essentially unoccupied (the field is detector-evasion ware), and
 with zero Rust presence in any of the three capabilities.**
 
 Validation that `who` works: locuslab's "Idiosyncrasies in Large Language
-Models" (arXiv 2502.12150) hit 97.1% on 5-way ChatGPT/the assistant/Grok/Gemini/
+Models" (arXiv 2502.12150) hit 97.1% on 5-way frontier-model
 DeepSeek attribution, with the signal rooted in word-level distributions that
 survive paraphrase, exactly the feature class our miner extracts. LLMDet
 (EMNLP 2023) validates the pre-recorded per-model n-gram dictionary approach
