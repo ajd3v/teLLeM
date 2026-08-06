@@ -100,7 +100,12 @@ plus the rejection class. Held out by prompt, threshold derived by `eval`:
 |---|---|
 | precision at the floor | 95.1% |
 | coverage there | 91.0% |
-| false positives, out of catalog | 1.9% |
+| false positives on 30,532 out-of-catalog texts | 2.7% |
+
+The holdout is resampled per run, so these move a little. Across six runs precision
+held at 95.1% by construction, coverage sat at 91.0% (once 90.7%), and false
+positives at 2.7% (twice 2.8%). The control is MAGE machine text from 28 model
+names, none of them in the catalog.
 
 It clears the floor on 300 samples per family where the 2024 catalog used
 10,340, which is worth knowing before anyone plans a long harvest.
