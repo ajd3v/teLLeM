@@ -81,10 +81,13 @@ header.site{
   border-bottom:1px solid var(--line);
   font-size:12px; letter-spacing:.14em; text-transform:uppercase;
 }
-.brand{ color:#e6fff5; font-weight:600; letter-spacing:.08em; }
+/* The wordmark hides LLM inside "tell them", so it must keep its own case: the header's
+   uppercase would flatten it to TELLEM and take the joke with it. */
+.brand{ color:#e6fff5; font-weight:600; letter-spacing:.08em; text-transform:none;
+        font-size:14px; }
 .brand::before{ content:"◆ "; color:var(--acc); animation:pulse 3.4s ease-in-out infinite; }
 @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
-.brand b{ color:var(--acc); }
+.brand b{ color:var(--acc); font-weight:600; }
 nav.site{ display:flex; gap:1.5em; align-items:center; }
 nav.site a{ color:var(--fg-dim); transition:color .2s; }
 nav.site a:hover{ color:var(--acc); }
