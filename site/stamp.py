@@ -11,12 +11,17 @@ html = site / 'index.html'
 s = html.read_text()
 
 for asset, pattern in [
-    ('styles.css', r'href="/styles\.css(?:\?v=[0-9a-f]+)?"'),
-    ('tellem/bench.js', r'src="/tellem/bench\.js(?:\?v=[0-9a-f]+)?"'),
+    ('styles.css', r'href="/styles\.css(?:\?v=[^"\s]+)?"'),
+    ('tellem/bench.js', r'src="/tellem/bench\.js(?:\?v=[^"\s]+)?"'),
 ]:
-    # bench.js is versioned by the engine it loads, not by its own bytes
-    src = site / ('tellem/tellem_wasm_bg.wasm' if asset.endswith('bench.js') else asset)
-    v = hashlib.sha256(src.read_bytes()).hexdigest()[:8]
+    # The loader passes its version to every lazy dependency.
+    sources = [asset] if asset.endswith('.css') else [
+        asset, 'tellem/tellem_wasm.js', 'tellem/tellem_wasm_bg.wasm', 'tellem/catalog.toml'
+    ]
+    digest = hashlib.sha256()
+    for source in sources:
+        digest.update((site / source).read_bytes())
+    v = digest.hexdigest()[:8]
     attr = 'href' if asset.endswith('.css') else 'src'
     s = re.sub(pattern, f'{attr}="/{asset}?v={v}"', s)
     print(f'{asset} -> {v}')

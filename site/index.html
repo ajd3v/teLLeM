@@ -13,7 +13,7 @@
 <meta name="theme-color" content="#04070a">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>%E2%97%86</text></svg>">
 <link rel="stylesheet" href="/fonts/fonts.css">
-<link rel="stylesheet" href="/styles.css?v=alanjdev2">
+<link rel="stylesheet" href="/styles.css?v=97805b9b">
 </head>
 <body>
 
@@ -80,12 +80,12 @@
 <section id="numbers">
   <div class="label"><span class="n">02</span> measured</div>
   <h2>The numbers, as measured.</h2>
-  <p class="lede">Attribution is tested the way it will be used. The catalog is four 2026 model families, about 300 samples each, split so no prompt appears on both sides. The confidence threshold is derived from that split rather than picked by hand. Precision is the fixed point, and coverage is whatever falls out of it.</p>
+  <p class="lede">The catalog uses four 2026 model families with about 300 samples each. Training and calibration are separated by prompt. The calibration set selects the confidence threshold and supplies the precision and coverage below. These figures still need confirmation on a separate, untouched test set.</p>
   <div class="numbers">
-    <div class="num"><b>95.1%</b><span>precision on the families it calls</span></div>
-    <div class="num"><b>91.0%</b><span>of texts get a call, the rest are declined</span></div>
+    <div class="num"><b>95.1%</b><span>calibration precision</span></div>
+    <div class="num"><b>91.0%</b><span>calibration coverage</span></div>
     <div class="num"><b>2.7%</b><span>false positives across 30,532 out-of-catalog texts</span></div>
-    <div class="num"><b>0.4 ms</b><span>to lint a paragraph in your browser</span></div>
+    <div class="num"><b>70</b><span>rules in the base pack</span></div>
   </div>
 </section>
 
@@ -99,11 +99,11 @@
 <section>
   <div class="label"><span class="n">04</span> discipline</div>
   <div class="refusal">
-    <blockquote>It never returns a percentage, and it never calls a person a machine.</blockquote>
+    <blockquote>Matched writing patterns do not establish who wrote a text.</blockquote>
     <div>
-      <p>A single tell proves nothing. Clustering is the only honest signal, so lint reports a density and a band rather than a verdict.</p>
+      <p>Lint reports matched rules with a density band. It does not determine authorship. Fix applies the supported rewrites without a language model.</p>
       <p>Attribution has the same discipline built in. A five-way classifier must pick one of five whatever you show it, which is why the first version named a model for 45% of genuine human writing. The catalog now carries a rejection class, and a text that ranks into it gets no match at any confidence.</p>
-      <p>Closed-set attribution is stylometric and probabilistic. It degrades on short text, on edited text, and on models that were never harvested. It is a forensic aid with cited evidence, and it declines more often than it guesses.</p>
+      <p>Attribution compares writing patterns with the catalog. Its confidence applies to that comparison. Short passages or edited text can change the result. A model outside the catalog can still receive an incorrect match.</p>
     </div>
   </div>
 </section>
@@ -117,7 +117,7 @@
 
 </div>
 
-<script type="module" src="/tellem/bench.js?v=alanjdev1"></script>
+<script type="module" src="/tellem/bench.js?v=e3287e10"></script>
 <script>
 (function () {
   /* Generated from catalog.toml by site/atlas.py. Hardcoding these meant a

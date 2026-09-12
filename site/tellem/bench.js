@@ -49,7 +49,7 @@ function el(tag, cls, text) {
 function renderLint(report) {
   out.replaceChildren();
   if (!report.findings.length) {
-    out.append(el('p', 'empty', 'No tells fired. That reads human, which is not the same as proof that it is.'));
+    out.append(el('p', 'empty', 'No rules matched. This does not establish who wrote the text.'));
   }
   for (const f of report.findings) {
     const row = el('div', 'finding');

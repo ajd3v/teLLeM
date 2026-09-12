@@ -12,8 +12,8 @@
   --line:      rgba(90,255,190,.16);
   --line-hard: rgba(90,255,190,.34);
   --fg:        #b9d6cc;
-  --fg-dim:    #5d7b73;
-  --fg-faint:  #33473f;
+  --fg-dim:    #8da89f;
+  --fg-faint:  #77968b;
   --acc:       #4dffb0;
   --acc-2:     #ffb347;
   --acc-3:     #6cc5ff;
@@ -228,6 +228,16 @@ textarea:focus{ outline:none; background:rgba(2,6,9,.75); }
 .bench-out .rule, .bench-out b{ color:var(--acc); }
 .bench-out .quote{ color:var(--acc-2); }
 .bench-out .dim{ color:var(--fg-faint); }
+
+.finding{
+  display:grid; grid-template-columns:4.5em minmax(0,1fr); gap:.25rem 1rem;
+  padding:1rem 0; border-bottom:1px solid var(--line); white-space:normal;
+}
+.f-id{ font-family:var(--mono); color:var(--acc); }
+.f-hit{ grid-column:2; color:var(--acc-2); white-space:pre-wrap; }
+.f-why{ grid-column:1 / -1; margin:.5rem 0 0; color:var(--fg-dim); }
+.tally{ display:flex; flex-wrap:wrap; align-items:baseline; gap:.5rem 1rem; padding-top:1rem; white-space:normal; }
+.band{ padding:.1rem .5rem; border:1px solid var(--line-hard); color:var(--acc-2); }
 
 /* ---------- numbers: stat tiles ---------- */
 
