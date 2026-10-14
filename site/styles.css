@@ -242,7 +242,7 @@ textarea:focus{ outline:none; background:rgba(2,6,9,.75); }
 /* ---------- numbers: stat tiles ---------- */
 
 .numbers{
-  display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr));
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
   gap:1px; background:var(--line); border:1px solid var(--line);
 }
 .num{ background:var(--bg-2); padding:1.3rem 1.2rem; }
@@ -305,8 +305,15 @@ footer.site .author{ color:var(--acc-2); }
 /* ---------- responsive ---------- */
 
 @media (max-width: 860px){
+  header.site{ flex-wrap:wrap; row-gap:.75rem; }
   .hero{ grid-template-columns:1fr; }
   .specimen{ display:none; }
   .refusal{ grid-template-columns:1fr; }
-  nav.site{ gap:1em; }
+  nav.site{ flex-wrap:wrap; gap:.5rem 1rem; }
+  .numbers{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+
+@media (max-width: 480px){
+  .bench-head{ flex-direction:column; align-items:flex-start; gap:.35rem; letter-spacing:.1em; }
+  .numbers{ grid-template-columns:minmax(0,1fr); }
 }
