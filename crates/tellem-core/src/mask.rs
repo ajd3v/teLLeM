@@ -64,13 +64,20 @@ pub fn mask(text: &str) -> Vec<(usize, usize)> {
     // Blocks first: a <script> body is masked whole, so tags inside it are
     // already covered and the tag pass skips them.
     for re in [re_html_block(), re_html_tag(), re_inline(), re_url()] {
-        for mm in re.find_iter(text) {
-            if !covered(&m, mm.start()) {
-                m.push((mm.start(), mm.end()));
-            }
-        }
+        // find_iter yields disjoint matches, so only earlier passes can cover
+        // a match start. Keep that mask sorted while collecting this pass.
+        let added: Vec<_> = re
+            .find_iter(text)
+            .filter(|mm| !covered(&m, mm.start()))
+            .map(|mm| (mm.start(), mm.end()))
+            .collect();
+        m.extend(added);
+        m = merge(m);
     }
+    m
+}
 
+fn merge(mut m: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
     m.sort_unstable();
     let mut merged: Vec<(usize, usize)> = Vec::new();
     for (s, e) in m {
@@ -83,11 +90,13 @@ pub fn mask(text: &str) -> Vec<(usize, usize)> {
 }
 
 fn covered(mask: &[(usize, usize)], pos: usize) -> bool {
-    mask.iter().any(|&(s, e)| pos >= s && pos < e)
+    let i = mask.partition_point(|&(_, e)| e <= pos);
+    mask.get(i).is_some_and(|&(s, _)| s <= pos)
 }
 
 pub fn overlaps(mask: &[(usize, usize)], start: usize, end: usize) -> bool {
-    mask.iter().any(|&(s, e)| start < e && end > s)
+    let i = mask.partition_point(|&(_, e)| e <= start);
+    mask.get(i).is_some_and(|&(s, _)| end > s)
 }
 
 /// Complement of the mask: the prose segments, in order.
@@ -104,4 +113,41 @@ pub fn prose_segments(text: &str, mask: &[(usize, usize)]) -> Vec<(usize, usize)
         segs.push((pos, text.len()));
     }
     segs
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mixed_masks_preserve_pass_precedence() {
+        let text = "```\n`code` https://fence.test\n```\n<script>`html` <b>x</b></script> `inline` https://url.test";
+        let ranges = mask(text);
+        let slices: Vec<_> = ranges.iter().map(|&(s, e)| &text[s..e]).collect();
+        assert_eq!(
+            slices,
+            [
+                "```\n`code` https://fence.test\n```\n<script>`html` <b>x</b></script>",
+                "`inline`",
+                "https://url.test"
+            ]
+        );
+    }
+
+    #[test]
+    fn range_queries_match_linear_scan_at_boundaries() {
+        let ranges = [(2, 5), (8, 12), (15, 20)];
+        for start in 0..=22 {
+            assert_eq!(
+                covered(&ranges, start),
+                ranges.iter().any(|&(s, e)| s <= start && start < e)
+            );
+            for end in start..=22 {
+                assert_eq!(
+                    overlaps(&ranges, start, end),
+                    ranges.iter().any(|&(s, e)| start < e && end > s)
+                );
+            }
+        }
+    }
 }
