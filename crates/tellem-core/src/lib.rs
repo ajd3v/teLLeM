@@ -179,6 +179,14 @@ impl Engine {
         let mut swaps = HashMap::new();
 
         for (i, r) in rules.iter().enumerate() {
+            if r.patterns.iter().any(String::is_empty)
+                || r.swaps.keys().any(String::is_empty)
+                || r.pattern.as_deref() == Some("")
+            {
+                return Err(
+                    format!("rule {}: patterns and swap keys must not be empty", r.id).into(),
+                );
+            }
             match r.kind {
                 Kind::Word => {
                     for (form, repl) in &r.swaps {

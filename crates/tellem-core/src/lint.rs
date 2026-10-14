@@ -174,6 +174,9 @@ impl Engine {
 }
 
 fn bounded(text: &[u8], start: usize, end: usize) -> bool {
+    if start >= end || end > text.len() {
+        return false;
+    }
     let before_ok = start == 0
         || !text[start].is_ascii_alphanumeric()
         || !text[start - 1].is_ascii_alphanumeric();
@@ -190,5 +193,21 @@ fn excerpt(text: &str, start: usize, end: usize) -> String {
     } else {
         let cut: String = slice.chars().take(57).collect();
         format!("{cut}...")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::bounded;
+
+    #[test]
+    fn empty_or_invalid_matches_are_not_word_bounded() {
+        for text in [b"".as_slice(), b"word"] {
+            assert!(!bounded(text, 0, 0));
+            assert!(!bounded(text, text.len(), text.len()));
+            assert!(!bounded(text, 0, text.len() + 1));
+        }
+        assert!(bounded(b"a word.", 2, 6));
+        assert!(!bounded(b"sword", 1, 5));
     }
 }
