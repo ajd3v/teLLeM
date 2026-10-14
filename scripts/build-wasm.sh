@@ -9,7 +9,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 PORTFOLIO="${DEVANEY_SITE:-$HOME/Projects/ajd3v/devaney-site}"
 
-npx --yes wasm-pack@latest build "$HERE/crates/tellem-wasm" \
+npx --yes wasm-pack@0.15.0 build "$HERE/crates/tellem-wasm" \
   --target web --release --out-dir "$HERE/target/wasm-site"
 
 copy_to() {
