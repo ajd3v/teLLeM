@@ -13,6 +13,9 @@ const MIME = {
 };
 
 createServer((req, res) => {
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-SqiZreeHKlghNMh7RM3JZXJWChwPtGHyEV/ii+kiDK8='; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+  res.setHeader('X-Frame-Options', 'DENY');
   let path;
   try {
     path = decodeURIComponent(new URL(req.url, 'http://x').pathname);

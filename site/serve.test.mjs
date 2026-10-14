@@ -4,6 +4,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { tmpdir } from 'node:os';
 import { runInNewContext } from 'node:vm';
+import { createHash } from 'node:crypto';
 
 const source = fs.readFileSync(new URL('./serve.mjs', import.meta.url), 'utf8')
   .replace(/^import .*;\n/gm, '')
@@ -20,9 +21,13 @@ function server(root) {
     },
   });
   return (url, host = 'localhost') => {
-    const response = {};
+    const response = { headers: {} };
     handler({ url, headers: { host } }, {
-      writeHead(status, headers) { Object.assign(response, { status, headers }); },
+      setHeader(name, value) { response.headers[name] = value; },
+      writeHead(status, headers) {
+        response.status = status;
+        Object.assign(response.headers, headers);
+      },
       end(body) { response.body = body; },
     });
     return response;
@@ -35,6 +40,26 @@ test('malformed targets return 400 and subsequent requests still work', () => {
     for (const host of ['localhost', 'tellem.gainful.work']) {
       assert.equal(request(target, host).status, 400);
       assert.equal(request('/healthz').body, 'ok');
+    }
+  }
+});
+
+test('security headers permit the shipped scripts and block framing', () => {
+  const request = server(new URL('.', import.meta.url).pathname);
+  const html = fs.readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+  assert.ok(scripts.length > 0);
+  for (const url of ['/', '/healthz', '/missing', '/%zz']) {
+    const { headers } = request(url);
+    const csp = headers['Content-Security-Policy'];
+    assert.ok(csp.includes("default-src 'self'"));
+    assert.ok(csp.includes("script-src 'self' 'wasm-unsafe-eval'"));
+    assert.ok(csp.includes("frame-ancestors 'none'"));
+    assert.equal(headers['X-Frame-Options'], 'DENY');
+    assert.equal(headers['Strict-Transport-Security'], 'max-age=31536000');
+    for (const [, script] of scripts) {
+      const hash = createHash('sha256').update(script).digest('base64');
+      assert.ok(csp.includes("'sha256-" + hash + "'"), 'inline script hash missing');
     }
   }
 });
