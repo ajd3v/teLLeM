@@ -45,17 +45,34 @@ test('paths and symlinks cannot escape the site root', (t) => {
   const root = path.join(dir, 'site');
   fs.mkdirSync(root);
   fs.mkdirSync(root + '-private');
-  fs.writeFileSync(path.join(root + '-private', 'marker.txt'), 'synthetic');
-  fs.symlinkSync(root + '-private', path.join(root, 'escape'));
+  fs.writeFileSync(path.join(root + '-private', 'marker.js'), 'synthetic');
+  fs.symlinkSync(root + '-private', path.join(root, 'tellem'));
   fs.writeFileSync(path.join(root, 'index.html'), 'home');
-  fs.symlinkSync(path.join(root, 'index.html'), path.join(root, 'inside.html'));
+  fs.symlinkSync(path.join(root, 'index.html'), path.join(root, 'styles.css'));
   for (const configuredRoot of [root, root + path.sep]) {
     const request = server(configuredRoot);
-    assert.equal(request('/..%2fsite-private%2fmarker.txt').status, 404);
-    assert.equal(request('/escape/marker.txt').status, 404);
-    assert.equal(request('/inside.html').body.toString(), 'home');
+    assert.equal(request('/..%2fsite-private%2fmarker.js').status, 404);
+    assert.equal(request('/tellem/marker.js').status, 404);
+    assert.equal(request('/styles.css').body.toString(), 'home');
     assert.equal(request('/%00').status, 404);
   }
+});
+
+test('only public site assets can be served', (t) => {
+  const root = fs.mkdtempSync(path.join(tmpdir(), 'tellem-assets-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const publicFiles = ['index.html', 'styles.css', 'fonts/fonts.css', 'fonts/font.woff2',
+    'tellem/bench.js', 'tellem/tellem_wasm.js', 'tellem/tellem_wasm_bg.wasm',
+    'tellem/catalog.toml', 'tellem/atlas.json'];
+  const privateFiles = ['README.md', 'serve.mjs', 'atlas.py', 'stamp.py',
+    'deploy/Dockerfile', 'deploy/push.sh', 'deploy/run-on-box.sh'];
+  for (const file of [...publicFiles, ...privateFiles]) {
+    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    fs.writeFileSync(path.join(root, file), 'synthetic');
+  }
+  const request = server(root);
+  for (const file of publicFiles) assert.equal(request('/' + file + '?v=abc').status, 200, file);
+  for (const file of privateFiles) assert.equal(request('/' + file).status, 404, file);
 });
 
 test('home page and canonical redirect still work', (t) => {

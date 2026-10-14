@@ -31,6 +31,11 @@ createServer((req, res) => {
     return res.end('ok');
   }
   if (path.endsWith('/')) path += 'index.html';
+  if (!['/index.html', '/styles.css'].includes(path) &&
+      !/^\/(?:fonts|tellem)\/[^/]+\.(?:css|js|wasm|woff2|json|toml)$/.test(path)) {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    return res.end('404');
+  }
   let file, body;
   try {
     file = realpathSync(join(ROOT, path));
