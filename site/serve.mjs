@@ -13,13 +13,19 @@ const MIME = {
 };
 
 createServer((req, res) => {
+  let path;
+  try {
+    path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+  } catch {
+    res.writeHead(400, { 'Content-Type': 'text/plain' });
+    return res.end('400');
+  }
   // canonical home moved to tellem.alanj.dev; the old host 301s there
   const host = String(req.headers.host || '').split(':')[0];
   if (host === 'tellem.gainful.work') {
     res.writeHead(301, { Location: 'https://tellem.alanj.dev' + req.url });
     return res.end();
   }
-  let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (path === '/healthz') {
     res.writeHead(200, { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' });
     return res.end('ok');
