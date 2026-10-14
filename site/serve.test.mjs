@@ -30,12 +30,31 @@ function server(root) {
 }
 
 test('malformed targets return 400 and subsequent requests still work', () => {
-  const request = server('/unused');
+  const request = server(tmpdir());
   for (const target of ['/%E0%A4', '//', '/%zz']) {
     for (const host of ['localhost', 'tellem.gainful.work']) {
       assert.equal(request(target, host).status, 400);
       assert.equal(request('/healthz').body, 'ok');
     }
+  }
+});
+
+test('paths and symlinks cannot escape the site root', (t) => {
+  const dir = fs.mkdtempSync(path.join(tmpdir(), 'tellem-path-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const root = path.join(dir, 'site');
+  fs.mkdirSync(root);
+  fs.mkdirSync(root + '-private');
+  fs.writeFileSync(path.join(root + '-private', 'marker.txt'), 'synthetic');
+  fs.symlinkSync(root + '-private', path.join(root, 'escape'));
+  fs.writeFileSync(path.join(root, 'index.html'), 'home');
+  fs.symlinkSync(path.join(root, 'index.html'), path.join(root, 'inside.html'));
+  for (const configuredRoot of [root, root + path.sep]) {
+    const request = server(configuredRoot);
+    assert.equal(request('/..%2fsite-private%2fmarker.txt').status, 404);
+    assert.equal(request('/escape/marker.txt').status, 404);
+    assert.equal(request('/inside.html').body.toString(), 'home');
+    assert.equal(request('/%00').status, 404);
   }
 });
 

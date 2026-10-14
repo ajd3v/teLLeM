@@ -2,10 +2,10 @@
 // the stack. HTML is no-cache so a rebuild's ?v= stamp always reaches the
 // browser; everything else is content-addressed by that stamp and cached hard.
 import { createServer } from 'node:http';
-import { existsSync, readFileSync, statSync } from 'node:fs';
-import { extname, join, normalize } from 'node:path';
+import { readFileSync, realpathSync, statSync } from 'node:fs';
+import { extname, join, relative, isAbsolute, sep } from 'node:path';
 
-const ROOT = process.env.SITE_ROOT ?? new URL('.', import.meta.url).pathname;
+const ROOT = realpathSync(process.env.SITE_ROOT ?? new URL('.', import.meta.url).pathname);
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript',
   '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.woff2': 'font/woff2',
@@ -31,8 +31,15 @@ createServer((req, res) => {
     return res.end('ok');
   }
   if (path.endsWith('/')) path += 'index.html';
-  const file = normalize(join(ROOT, path));
-  if (!file.startsWith(normalize(ROOT)) || !existsSync(file) || !statSync(file).isFile()) {
+  let file, body;
+  try {
+    file = realpathSync(join(ROOT, path));
+    const inside = relative(ROOT, file);
+    if (inside === '..' || inside.startsWith('..' + sep) || isAbsolute(inside) || !statSync(file).isFile()) {
+      throw new Error('outside site or not a file');
+    }
+    body = readFileSync(file);
+  } catch {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     return res.end('404');
   }
@@ -43,7 +50,7 @@ createServer((req, res) => {
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
   });
-  res.end(readFileSync(file));
+  res.end(body);
 }).listen(Number(process.env.PORT ?? 8940), process.env.BIND ?? '0.0.0.0', () => {
   console.log(`tellem site on ${process.env.BIND ?? '0.0.0.0'}:${process.env.PORT ?? 8940}`);
 });
