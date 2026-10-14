@@ -86,6 +86,19 @@ fn openers_deleted_and_recapitalized() {
 }
 
 #[test]
+fn recapitalization_preserves_leading_masked_text() {
+    let e = eng();
+    for masked in [
+        "`leverage`",
+        "<code>leverage</code>",
+        "https://example.test",
+    ] {
+        let text = format!("It's worth noting that {masked} works.");
+        assert_eq!(e.fix(&text), format!("{masked} works."));
+    }
+}
+
+#[test]
 fn cliche_phrases_rewritten() {
     let e = eng();
     assert_eq!(

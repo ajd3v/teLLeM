@@ -1,7 +1,7 @@
 //! fix: deterministic, reviewable rewrites keyed to rules. Diff in, diff out.
 //! Never touches masked regions (code, URLs) and never rewrites structure.
 
-use crate::mask::{mask, prose_segments};
+use crate::mask::{mask, overlaps, prose_segments};
 use crate::Engine;
 use regex::{Captures, Regex};
 use std::sync::OnceLock;
@@ -50,7 +50,10 @@ impl Engine {
             .find(|c| c.is_ascii_alphabetic())
             .is_some_and(|c| c.is_ascii_uppercase());
         if orig_upper {
-            if let Some(i) = out.find(|c: char| c.is_ascii_alphabetic()) {
+            if let Some(i) = out
+                .find(|c: char| c.is_ascii_alphabetic())
+                .filter(|&i| !overlaps(&mask(&out), i, i + 1))
+            {
                 let upper = out[i..i + 1].to_ascii_uppercase();
                 out.replace_range(i..i + 1, &upper);
             }
