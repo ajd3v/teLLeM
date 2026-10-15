@@ -13,7 +13,7 @@
 <meta name="theme-color" content="#04070a">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>%E2%97%86</text></svg>">
 <link rel="stylesheet" href="/fonts/fonts.css">
-<link rel="stylesheet" href="/styles.css?v=f732398b">
+<link rel="stylesheet" href="/styles.css?v=8a24993b">
 </head>
 <body>
 
@@ -64,13 +64,13 @@
   <div class="bench">
     <div class="bench-head">
       <span>70 rules · base pack · client side</span>
-      <span id="status">idle</span>
+      <span id="status" role="status" aria-atomic="true">idle</span>
     </div>
     <textarea id="input" rows="7" spellcheck="false" aria-label="Text to analyse" placeholder="Paste a paragraph and find out what it gives away."></textarea>
     <div class="bench-actions">
       <button type="button" id="lint">Lint</button>
       <button type="button" id="fix">Fix</button>
-      <button type="button" id="who">Who wrote it</button>
+      <button type="button" id="who">Match model</button>
       <button type="button" id="sample">Sample</button>
     </div>
     <div class="bench-out" id="out" aria-live="polite"></div>
@@ -117,7 +117,7 @@
 
 </div>
 
-<script type="module" src="/tellem/bench.js?v=e3287e10"></script>
+<script type="module" src="/tellem/bench.js?v=15cb3cda"></script>
 <script>
 (function () {
   /* Generated from catalog.toml by site/atlas.py. Hardcoding these meant a

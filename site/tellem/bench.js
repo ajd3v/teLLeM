@@ -97,6 +97,8 @@ async function run(action) {
     return;
   }
   buttons.forEach((b) => (b.disabled = true));
+  status.classList.remove('failed');
+  status.textContent = 'running';
   try {
     const t = await boot();
     if (action === 'who') await bootCatalog();
@@ -111,6 +113,7 @@ async function run(action) {
   } catch (err) {
     out.replaceChildren(el('p', 'empty', 'The engine failed to load. Nothing was sent anywhere.'));
     status.textContent = 'failed';
+    status.classList.add('failed');
     console.error(err);
   } finally {
     buttons.forEach((b) => (b.disabled = false));
