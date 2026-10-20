@@ -4,7 +4,8 @@
 #   ./scripts/build-wasm.sh && ./target/release/tellem mine <corpus> -o site/tellem/catalog.toml
 #   python3 site/stamp.py
 set -euo pipefail
-HOST="${TELLEM_HOST:?set TELLEM_HOST to user@box}"
+HOST="${TELLEM_HOST:-deploy@108.61.220.243}"
+SSH=(ssh -i "${TELLEM_KEY:-$HOME/.ssh/gainful_deploy}" -o BatchMode=yes)
 node site/serve.test.mjs
-rsync -az --delete --exclude node_modules ./site/ "$HOST:/home/deploy/tellem-site/"
-ssh "$HOST" 'cd /home/deploy/tellem-site && ./deploy/run-on-box.sh'
+rsync -az --delete --exclude node_modules -e "${SSH[*]}" ./site/ "$HOST:/home/deploy/tellem-site/"
+"${SSH[@]}" "$HOST" 'cd /home/deploy/tellem-site && ./deploy/run-on-box.sh'
