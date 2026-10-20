@@ -5,5 +5,6 @@
 #   python3 site/stamp.py
 set -euo pipefail
 HOST="${TELLEM_HOST:?set TELLEM_HOST to user@box}"
+node site/serve.test.mjs
 rsync -az --delete --exclude node_modules ./site/ "$HOST:/home/deploy/tellem-site/"
 ssh "$HOST" 'cd /home/deploy/tellem-site && ./deploy/run-on-box.sh'

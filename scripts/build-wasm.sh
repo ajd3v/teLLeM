@@ -7,9 +7,14 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
-PORTFOLIO="${DEVANEY_SITE:-$HOME/Projects/ajd3v/devaney-site}"
+PORTFOLIO="${DEVANEY_SITE:-$HOME/Projects/ajd3v/alanj.dev}"
 
-npx --yes wasm-pack@0.15.0 build "$HERE/crates/tellem-wasm" \
+if command -v wasm-pack >/dev/null 2>&1; then
+  WASM_PACK=(wasm-pack)
+else
+  WASM_PACK=(npx --yes wasm-pack@0.15.0)
+fi
+"${WASM_PACK[@]}" build "$HERE/crates/tellem-wasm" \
   --target web --release --out-dir "$HERE/target/wasm-site"
 
 copy_to() {
