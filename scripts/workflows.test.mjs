@@ -22,3 +22,16 @@ test('teLLeM-006 external actions use commit pins', () => {
     }
   }
 });
+
+test('teLLeM-007 CI token is read only and checkout does not persist it', () => {
+  const source = readFileSync(new URL('ci.yml', directory), 'utf8');
+  const permissions = source.match(/^permissions:\n((?:[ \t]+[^\n]*\n)*)/m);
+  assert.ok(permissions, 'expected top level permissions');
+  assert.equal(permissions[1].trim(), 'contents: read');
+  const checkouts = [...source.matchAll(/^([ \t]*)- uses: actions\/checkout@[^\n]+\n((?:\1[ \t]+[^\n]*\n)*)/gm)];
+  assert.ok(checkouts.length > 0, 'expected checkout step');
+  for (const [, indent, settings] of checkouts) {
+    assert.match(settings, new RegExp(`^${indent}  with:\\n`, 'm'));
+    assert.match(settings, new RegExp(`^${indent}    persist-credentials: false\\s*$`, 'm'));
+  }
+});
