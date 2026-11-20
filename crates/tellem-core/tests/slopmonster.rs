@@ -220,6 +220,27 @@ gap!(
 gap!(rhetorical_filler, "G011", "Why does this matter?", true);
 
 gap!(
+    noun_contrast,
+    "G010",
+    "This is not a bug but a feature.",
+    true
+);
+
+gap!(
+    not_just_about_but_also,
+    "G010",
+    "It's not just about speed but also about trust.",
+    true
+);
+
+gap!(
+    about_contrast,
+    "G010",
+    "This isn't about tools but about people.",
+    true
+);
+
+gap!(
     marketing_contrast,
     "G010",
     "Our platform doesn't just store data, it unlocks insights.",
@@ -375,6 +396,11 @@ fn factual_lists_and_ordinary_questions_are_spared() {
         "What does this function return?",
         "This is not a tool. It is a partner.",
         "It is not a tool\nwe use, it is a partner.",
+        "I haven't used Snowflake in production, but I ran dbt on Postgres.",
+        "I'm not able to relocate, but I can work hybrid.",
+        "I have not managed a budget, but I tracked grant spending monthly.",
+        "We did not ship on Friday, but we shipped Monday.",
+        "I don't have a degree, but I have 12 years of paid work.",
     ] {
         assert!(
             !e.lint(text).findings.iter().any(|f| matches!(

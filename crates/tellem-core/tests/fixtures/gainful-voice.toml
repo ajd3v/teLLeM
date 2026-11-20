@@ -110,7 +110,7 @@ rationale = "owner voice avoids three-part promotional cadence, factual inventor
 id = "G010"
 name = "contrast-framing"
 kind = "regex"
-pattern = "(?i)\\b(?:not|\\w+n['\\x{2019}]t)\\s+(?:(?:just|only|merely)\\s+)?[^,.!?\\n]{1,80}(?:,?\\s+but\\s+|,\\s+it(?:['\\x{2019}]s| is)?\\s+)\\w+"
+pattern = "(?i)\\b(?:not|\\w+n['\\x{2019}]t)\\s+(?:(?:just|only|merely)\\s+)?[^,.!?\\n]{1,80}(?:,?\\s+but\\s+(?:also|rather|instead|a|an|the|about|to|in|for|just|simply|more|less)\\b|,\\s+it(?:['\\x{2019}]s| is)?\\s+\\w+)"
 weight = 0.6
 rationale = "owner voice avoids contrast templates, state the positive claim directly"
 
