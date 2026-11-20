@@ -198,6 +198,15 @@ Reusable inputs:
  antislop-sampler's slop-phrase lists (Apache-2.0, 350 stars, ICLR 2026),
  slop-gate's ~40 tells. Per-rule receipts can cite the Science Advances
  15M-abstract study ("delve" 10.45x post-ChatGPT) for credibility.
+- **Additional rule seeds**: [SlopMonster](https://github.com/ItsssssJack/SlopMonster),
+ commit `3fc9787`, MIT license. The handoff gap lists supply vocabulary and
+ construction candidates. These are review prompts with low weights, with
+ no claim of measured authorship accuracy. New rules are flag-only because
+ their wording needs context before a writer can choose a replacement.
+ The owner's voice mirror carries strict contrast and unlock rules, plus
+ rhetorical filler questions. Single-list detection is limited to
+ promotional cadence. General three-item lists remain outside that rule
+ because factual inventories produced false positives in the resume.
 - **Corpora/eval**: MAGE (27 LLMs, 7 families, 10 domains, best attribution
  training set), M4/M4GT-Bench (multilingual, EACL 2024), locuslab per-model
  response corpora, DetectRL (adversarial). slop-forensics (357 stars, MIT)

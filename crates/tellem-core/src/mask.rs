@@ -42,6 +42,66 @@ fn re_html_tag() -> &'static Regex {
     RE.get_or_init(|| Regex::new(r"(?s)<[a-zA-Z/!][^>]*>").unwrap())
 }
 
+fn re_aria_hidden() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r#"(?i)\saria-hidden\s*=\s*(?:"true"|'true'|true(?:\s|/?>))"#).unwrap()
+    })
+}
+
+/// Decorative HTML examples are mentions, like code blocks. Track matching
+/// tags so a nested div cannot end a hidden region before its outer div.
+fn decorative_html(text: &str, masked: &[(usize, usize)]) -> Vec<(usize, usize)> {
+    let mut ranges = Vec::new();
+    let mut hidden: Option<(usize, String, usize)> = None;
+    for m in re_html_tag().find_iter(text) {
+        if covered(masked, m.start()) {
+            continue;
+        }
+        let tag = m.as_str();
+        let closing = tag.starts_with("</");
+        let name = tag
+            .trim_start_matches(['<', '/'])
+            .split(|c: char| c.is_whitespace() || c == '/' || c == '>')
+            .next()
+            .unwrap_or("");
+        let self_closing = tag.ends_with("/>")
+            || matches!(
+                name.to_ascii_lowercase().as_str(),
+                "area"
+                    | "base"
+                    | "br"
+                    | "col"
+                    | "embed"
+                    | "hr"
+                    | "img"
+                    | "input"
+                    | "link"
+                    | "meta"
+                    | "param"
+                    | "source"
+                    | "track"
+                    | "wbr"
+            );
+        if let Some((start, hidden_name, depth)) = &mut hidden {
+            if name.eq_ignore_ascii_case(hidden_name) {
+                if closing {
+                    *depth -= 1;
+                    if *depth == 0 {
+                        ranges.push((*start, m.end()));
+                        hidden = None;
+                    }
+                } else if !self_closing {
+                    *depth += 1;
+                }
+            }
+        } else if !closing && !self_closing && re_aria_hidden().is_match(tag) {
+            hidden = Some((m.start(), name.to_string(), 1));
+        }
+    }
+    ranges
+}
+
 /// Sorted, merged masked byte ranges.
 pub fn mask(text: &str) -> Vec<(usize, usize)> {
     let mut m: Vec<(usize, usize)> = Vec::new();
@@ -61,20 +121,24 @@ pub fn mask(text: &str) -> Vec<(usize, usize)> {
         m.push((s, text.len()));
     }
 
-    // Blocks first: a <script> body is masked whole, so tags inside it are
-    // already covered and the tag pass skips them.
-    for re in [re_html_block(), re_html_tag(), re_inline(), re_url()] {
-        // find_iter yields disjoint matches, so only earlier passes can cover
-        // a match start. Keep that mask sorted while collecting this pass.
-        let added: Vec<_> = re
-            .find_iter(text)
-            .filter(|mm| !covered(&m, mm.start()))
-            .map(|mm| (mm.start(), mm.end()))
-            .collect();
-        m.extend(added);
-        m = merge(m);
+    // Blocks first, then decorative regions, before masking individual tags.
+    m = add_matches(text, m, re_html_block());
+    m.extend(decorative_html(text, &m));
+    m = merge(m);
+    for re in [re_html_tag(), re_inline(), re_url()] {
+        m = add_matches(text, m, re);
     }
     m
+}
+
+fn add_matches(text: &str, mut masked: Vec<(usize, usize)>, re: &Regex) -> Vec<(usize, usize)> {
+    let added: Vec<_> = re
+        .find_iter(text)
+        .filter(|m| !covered(&masked, m.start()))
+        .map(|m| (m.start(), m.end()))
+        .collect();
+    masked.extend(added);
+    merge(masked)
 }
 
 fn merge(mut m: Vec<(usize, usize)>) -> Vec<(usize, usize)> {

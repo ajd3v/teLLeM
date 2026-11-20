@@ -4,57 +4,9 @@
 
 use tellem_core::{Engine, Pack};
 
-/// Ships in gainful as packages/shared/voice.toml. Inlined here so the public
-/// repo keeps the platform's voice rules out of the public pack while still
-/// proving the pack mechanism carries them.
-const VOICE_PACK: &str = r#"
-[meta]
-name = "voice"
-version = "0.1.0"
-
-[[rules]]
-id = "G001"
-name = "roles-to-jobs"
-kind = "word"
-weight = 0.5
-rationale = "job listings are jobs, roles is recruiter dialect (singular role is fine)"
-[rules.swaps]
-roles = "jobs"
-
-[[rules]]
-id = "G002"
-name = "semicolon-clause-split"
-kind = "regex"
-pattern = '([A-Za-z0-9,)]); +([a-z])'
-replace = '$1. $2'
-weight = 1.0
-rationale = "a semicolon joining two clauses is a model tell, two sentences read human"
-
-[[rules]]
-id = "G003"
-name = "colon-clause-split"
-kind = "regex"
-pattern = '([A-Za-z0-9,)]): +([a-z])'
-replace = '$1. $2'
-weight = 1.0
-rationale = "a colon dramatizing a lowercase continuation is a model tell, labels take a capital"
-
-[[rules]]
-id = "G006"
-name = "employer-then-technology"
-kind = "regex"
-pattern = '(?i)\b(?:at|with|for|while at) [A-Z][A-Za-z&.\- ]{2,40}[,;] [^.]{0,120}\b(?:TimescaleDB|PostgreSQL|Kafka|Terraform|Kubernetes|AWS|Azure|GCP|Snowflake|Databricks|React|Angular|Vue|Django|Rails|PHP|WordPress|Looker|Tableau|Spark|Airflow|dbt)\b'
-weight = 0.4
-rationale = "an employer named next to a technology is the role-conflation shape"
-
-[[rules]]
-id = "G007"
-name = "unhedged-precise-figure"
-kind = "regex"
-pattern = '\$[0-9]+\.[0-9]{2,}|\b[0-9]{1,3},[0-9]{3}(?:,[0-9]{3})*\b|\b[0-9]{5,}\b'
-weight = 0.3
-rationale = "a precise figure reads as measured, confirm it is in the resume or a cited corpus item"
-"#;
+/// Mirrors gainful packages/tellem/voice.toml, with proposed owner rules.
+/// The fixture keeps owner preferences separate from the public base pack.
+const VOICE_PACK: &str = include_str!("fixtures/gainful-voice.toml");
 
 fn eng() -> Engine {
     Engine::from_packs(&[

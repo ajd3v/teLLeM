@@ -331,3 +331,33 @@ fn the_base_pack_stays_domain_agnostic() {
         "base pack rationales name a single field: {leaked:?}"
     );
 }
+
+#[test]
+fn decorative_html_is_not_prose() {
+    let e = eng();
+    for sample in [
+        "<div aria-hidden=\"true\"><span>delve</span><div>leverage</div>utilize</div>",
+        "<DIV ARIA-HIDDEN='TRUE'><span>delve</span></DIV>",
+        "<span aria-hidden=true>delve</span>",
+    ] {
+        assert!(e.lint(sample).findings.is_empty(), "{sample}");
+        assert_eq!(e.fix(sample), sample);
+        let text = format!("{sample}<p>We delve.</p>");
+        let findings = e.lint(&text).findings;
+        assert_eq!(findings.len(), 1, "{findings:?}");
+        assert_eq!(findings[0].start, sample.len() + 6);
+    }
+    for sample in [
+        "<div aria-hidden=\"false\">delve</div>",
+        "<div data-aria-hidden=\"true\">delve</div>",
+    ] {
+        assert_eq!(e.lint(sample).findings.len(), 1);
+    }
+}
+
+#[test]
+fn hidden_void_elements_do_not_swallow_later_prose_or_masks() {
+    let text = "<img aria-hidden='true' src='delve.png'><p>We delve.</p><div aria-hidden='true'>delve</div>";
+    let findings = eng().lint(text).findings;
+    assert_eq!(findings.len(), 1, "{findings:?}");
+}

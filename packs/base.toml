@@ -823,3 +823,292 @@ kind = "phrase"
 patterns = ["a wide range of", "a broad range of", "a diverse range of"]
 weight = 0.6
 rationale = "vague quantifier standing in for the actual list"
+
+[[rules]]
+id = "T057"
+name = "state-of-the-art"
+kind = "word"
+patterns = ["state-of-the-art", "state of the art"]
+weight = 0.3
+rationale = "state-of-the-art claims technical superiority without a comparison"
+
+[[rules]]
+id = "T058"
+name = "transformation"
+kind = "phrase"
+# T038 already covers transformative.
+patterns = ["digital transformation", "digital transformations", "business transformation", "business transformations", "transformational"]
+weight = 0.3
+rationale = "promotional transformation wording inflates a change without describing it"
+
+[[rules]]
+id = "T059"
+name = "innovate"
+kind = "word"
+patterns = ["innovate", "innovates", "innovated", "innovating", "innovation", "innovations", "innovative", "innovatively"]
+weight = 0.3
+rationale = "innovation language claims novelty without describing the change"
+
+[[rules]]
+id = "T060"
+name = "paradigm"
+kind = "phrase"
+patterns = ["paradigm shift", "paradigm shifts", "new paradigm", "new paradigms"]
+weight = 0.3
+rationale = "paradigm shifts and new paradigms claim a broad change without describing it"
+
+[[rules]]
+id = "T061"
+name = "bespoke"
+kind = "word"
+patterns = ["bespoke"]
+weight = 0.3
+rationale = "bespoke is promotional wording for something made for a specific use"
+
+[[rules]]
+id = "T062"
+name = "beacon"
+kind = "phrase"
+patterns = ["beacon of", "beacons of"]
+weight = 0.3
+rationale = "beacon of frames praise as a guiding light"
+
+[[rules]]
+id = "T063"
+name = "unparalleled"
+kind = "word"
+patterns = ["unparalleled"]
+weight = 0.3
+rationale = "unparalleled claims a comparison the sentence does not supply"
+
+[[rules]]
+id = "T064"
+name = "supercharge"
+kind = "word"
+patterns = ["supercharge", "supercharges", "supercharged", "supercharging"]
+weight = 0.3
+rationale = "supercharge is promotional language for an unspecified improvement"
+
+[[rules]]
+id = "T065"
+name = "turbocharge"
+kind = "word"
+patterns = ["turbocharge", "turbocharges", "turbocharged", "turbocharging"]
+weight = 0.3
+rationale = "turbocharge is promotional language for an unspecified improvement"
+
+[[rules]]
+id = "T066"
+name = "effortless"
+kind = "word"
+patterns = ["effortless", "effortlessly"]
+weight = 0.3
+rationale = "effortless promises ease without saying what work remains"
+
+[[rules]]
+id = "T067"
+name = "next-level"
+kind = "word"
+patterns = ["next-level", "next level"]
+weight = 0.3
+rationale = "next-level asserts an improvement without naming it"
+
+[[rules]]
+id = "T068"
+name = "compelling"
+kind = "word"
+patterns = ["compelling", "compellingly"]
+weight = 0.3
+rationale = "compelling asks the reader to accept praise without its supporting detail"
+
+[[rules]]
+id = "T069"
+name = "intuitive"
+kind = "word"
+patterns = ["intuitive", "intuitively"]
+weight = 0.3
+rationale = "intuitive claims ease of use without describing the interaction"
+
+[[rules]]
+id = "T070"
+name = "world-class"
+kind = "word"
+patterns = ["world-class", "world class"]
+weight = 0.3
+rationale = "world-class claims standing without a comparison"
+
+[[rules]]
+id = "T071"
+name = "best-in-class"
+kind = "word"
+patterns = ["best-in-class", "best in class"]
+weight = 0.3
+rationale = "best-in-class claims standing without naming the class or comparison"
+
+[[rules]]
+id = "P048"
+name = "whether-you-are"
+kind = "regex"
+pattern = "(?i)\\bwhether (?:you['\\x{2019}]re|you are) [^.!?\\n]{1,80}?\\bor\\s+\\w+"
+weight = 0.4
+rationale = "whether you are X or Y is a stock audience framing template"
+
+[[rules]]
+id = "P049"
+name = "more-than-just"
+kind = "regex"
+pattern = "(?i)\\bmore than just\\b"
+weight = 0.4
+rationale = "more than just inflates a description before stating what the thing does"
+
+[[rules]]
+id = "P050"
+name = "comes-in"
+kind = "regex"
+pattern = "(?i)\\bthat(?:['\\x{2019}]s| is) where [^.!?\\n]{1,80}?\\bcomes? in\\b"
+weight = 0.4
+rationale = "that is where X comes in is a stock product introduction"
+
+[[rules]]
+id = "P051"
+name = "say-goodbye"
+kind = "regex"
+pattern = "(?i)\\b(?:say|says|said|saying) goodbye to\\b"
+weight = 0.4
+rationale = "say goodbye to is a stock promise that hides the actual change"
+
+[[rules]]
+id = "P052"
+name = "imagine-a"
+kind = "regex"
+pattern = "(?i)\\bimagine an?\\b"
+weight = 0.4
+rationale = "imagine a is a stock scene-setting prompt, check whether the scene is needed"
+
+[[rules]]
+id = "P053"
+name = "key-or-truth"
+kind = "regex"
+pattern = '(?i)\bthe (?:truth is|key is (?:to|that|simple|understanding))\b'
+weight = 0.4
+rationale = "truth and key framing add authority before stating the claim"
+
+[[rules]]
+id = "P054"
+name = "helps-you-to"
+kind = "regex"
+pattern = "(?i)\\bhelp(?:s|ed|ing)? you to\\b"
+weight = 0.4
+rationale = "helps you to is padded benefit framing, state the action directly"
+
+[[rules]]
+id = "P055"
+name = "stacked-hedging"
+kind = "regex"
+pattern = "(?i)\\b(?:could|may|might) (?:potentially|possibly|perhaps)\\b"
+weight = 0.4
+rationale = "two adjacent hedges repeat the same uncertainty"
+
+[[rules]]
+id = "P056"
+name = "intensifier-padding"
+kind = "regex"
+pattern = "(?i)\\b(?:very|really|extremely|absolutely) (?:unique|perfect|essential|unprecedented)\\b"
+weight = 0.4
+rationale = "an intensifier adds no precision to an absolute claim"
+
+[[rules]]
+id = "P057"
+name = "heres-the-thing"
+kind = "regex"
+pattern = "(?i)\\bhere(?:['\\x{2019}]s| is) the thing\\b"
+weight = 0.4
+rationale = "here is the thing delays the point with conversational filler"
+
+[[rules]]
+id = "P058"
+name = "ready-to-get-started"
+kind = "regex"
+pattern = "(?i)\\bready to get started\\b"
+weight = 0.4
+rationale = "ready to get started is a boilerplate call to action"
+
+[[rules]]
+id = "P059"
+name = "self-answering-question"
+kind = "regex"
+pattern = "(?i)\\bthe (?:result|answer|outcome|secret)\\s*\\?"
+weight = 0.4
+rationale = "a short question announcing its own answer adds dramatic filler"
+
+[[rules]]
+id = "P060"
+name = "compound-pileup"
+kind = "regex"
+pattern = "\\b[A-Za-z]+(?:-[A-Za-z]+)+(?:[ \\t,]+(?:[A-Za-z0-9]+[ \\t,]+)*[A-Za-z]+(?:-[A-Za-z]+)+){3}\\b"
+weight = 0.4
+rationale = "four hyphenated compounds in one sentence can bury the concrete description"
+
+[[rules]]
+id = "P061"
+name = "crafted"
+kind = "phrase"
+patterns = ["crafted"]
+weight = 0.3
+rationale = "crafted can substitute a claim of care for a description of the work"
+
+[[rules]]
+id = "P062"
+name = "curated"
+kind = "phrase"
+patterns = ["carefully curated", "expertly curated", "curated experience", "curated experiences", "curated selection", "curated selections"]
+weight = 0.3
+rationale = "promotional curation wording praises a selection without naming its criteria"
+
+[[rules]]
+id = "P063"
+name = "navigate-the"
+kind = "regex"
+pattern = '(?i)\bnavigat(?:e|es|ed|ing) the (?:complexities|landscape|challenges|world|waters|maze|intricacies)\b'
+weight = 0.3
+rationale = "navigating abstract obstacles frames ordinary decisions as a voyage"
+
+[[rules]]
+id = "P064"
+name = "in-the-world-of"
+kind = "phrase"
+patterns = ["in the world of"]
+weight = 0.3
+rationale = "in the world of is scene-setting filler"
+
+[[rules]]
+id = "P065"
+name = "lets-dive"
+kind = "phrase"
+patterns = ["let's dive", "let\u2019s dive", "let us dive"]
+weight = 0.3
+rationale = "let us dive is a stock transition into the topic"
+
+[[rules]]
+id = "P066"
+name = "buckle-up"
+kind = "phrase"
+patterns = ["buckle up"]
+weight = 0.3
+rationale = "buckle up adds excitement before the writer has given a reason"
+
+[[rules]]
+id = "P067"
+name = "secret-sauce"
+kind = "phrase"
+patterns = ["the secret sauce"]
+weight = 0.3
+rationale = "the secret sauce is a vague metaphor for the actual method"
+
+[[rules]]
+id = "P068"
+name = "level-up"
+kind = "phrase"
+patterns = ["level up", "levels up", "leveled up", "levelled up", "leveling up", "levelling up"]
+weight = 0.3
+rationale = "level up claims progress without stating the improvement"

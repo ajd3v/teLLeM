@@ -1,0 +1,123 @@
+# Platform voice rules, layered on teLLeM's public base pack (rule ids override).
+# The general AI tells live in teLLeM. Only rules specific to this product go
+# here. Mirrored by tests/gainful_parity.rs in the teLLeM repo, keep both green.
+
+[meta]
+name = "voice"
+version = "0.1.0"
+
+[[rules]]
+id = "G001"
+name = "roles-to-jobs"
+kind = "word"
+weight = 0.5
+rationale = "job listings are jobs, roles is recruiter dialect (singular role is fine)"
+[rules.swaps]
+roles = "jobs"
+
+[[rules]]
+id = "G002"
+name = "semicolon-clause-split"
+kind = "regex"
+pattern = '([A-Za-z0-9,)]); +([a-z])'
+replace = '$1. $2'
+weight = 1.0
+rationale = "a semicolon joining two clauses is a model tell, two sentences read human"
+
+[[rules]]
+id = "G003"
+name = "colon-clause-split"
+kind = "regex"
+pattern = '([A-Za-z0-9,)]): +([a-z])'
+replace = '$1. $2'
+weight = 1.0
+rationale = "a colon dramatizing a lowercase continuation is a model tell, labels take a capital"
+
+[[rules]]
+id = "G004"
+name = "resume-no-accents-lower"
+kind = "regex"
+# \x{e9} is e-acute in Rust regex syntax. Written escaped ON PURPOSE: a repo-wide accent sweep
+# rewrote the literal characters here and left pattern = 'resume|resume|resume',
+# so the rule matched the correct spelling and flagged it. Do not "tidy" these
+# back into literals.
+pattern = 'r\x{e9}sum\x{e9}|r\x{e9}sume|resum\x{e9}'
+replace = 'resume'
+weight = 0.5
+rationale = "owner directive, given repeatedly: always resume, never an accented spelling"
+
+[[rules]]
+id = "G005"
+name = "resume-no-accents-upper"
+kind = "regex"
+pattern = 'R\x{e9}sum\x{e9}|R\x{e9}sume|Resum\x{e9}'
+replace = 'Resume'
+weight = 0.5
+rationale = "same rule, capitalized, so headings and sentence starts stay capitalized"
+
+# ---------- Added 2026-07-31. Not style tells: these flag prose SHAPES that
+# carried fabrications into real applications during session 5. Neither is
+# fixable, because neither can be resolved without checking the resume and the
+# career corpus. They exist to force a human look, and they are deliberately
+# low-weight so they surface without dominating the band.
+
+[[rules]]
+id = "G006"
+name = "employer-then-technology"
+kind = "regex"
+# "At <Employer>, I ... <Tech>" within one clause. The Rivian cover letter opened
+# "At Friendship Shelter" and then credited that role with TimescaleDB and a C++
+# backfiller, which belong to a different job seven years earlier. Every
+# ingredient was real and the attribution was not, which is the failure mode no
+# style rule catches.
+pattern = '(?i)\b(?:at|with|for|while at) [A-Z][A-Za-z&.\- ]{2,40}[,;] [^.]{0,120}\b(?:TimescaleDB|PostgreSQL|Kafka|Terraform|Kubernetes|AWS|Azure|GCP|Snowflake|Databricks|React|Angular|Vue|Django|Rails|PHP|WordPress|Looker|Tableau|Spark|Airflow|dbt)\b'
+weight = 0.4
+rationale = "an employer named next to a technology is the role-conflation shape, confirm the tech belongs to THAT job before sending"
+
+[[rules]]
+id = "G007"
+name = "unhedged-precise-figure"
+kind = "regex"
+# Precise-looking figures read as measured whether or not anyone measured them.
+# Session 5 shipped "$0.022 per call on the first 20,000 calls" and "mentored 2
+# junior analysts", neither of which exists in the resume or the 162-item corpus.
+# Rust regex has no lookaround, so hedges cannot be excluded by pattern. Instead
+# PRECISION is the trigger: currency with cents, thousands separators, or four+
+# digits. "roughly 40 staff" does not match, "$0.022" and "20,000" do.
+# Bare integers need FIVE digits: the four-digit form flagged "2024" as a
+# claimed metric when it was a year, and years are the common case.
+pattern = '\$[0-9]+\.[0-9]{2,}|\b[0-9]{1,3},[0-9]{3}(?:,[0-9]{3})*\b|\b[0-9]{5,}\b'
+weight = 0.3
+rationale = "a figure this precise reads as measured. Confirm it appears verbatim in the resume or a cited corpus item. Round counts like 40 or 16 do not match, precision is the signal"
+
+[[rules]]
+id = "G008"
+name = "unlock"
+kind = "word"
+patterns = ["unlock", "unlocks", "unlocked", "unlocking"]
+weight = 0.5
+rationale = "owner voice avoids unlock as a metaphor, name the action"
+
+[[rules]]
+id = "G009"
+name = "promotional-triplet"
+kind = "regex"
+pattern = "(?i)\\b(?:(?:fast|simple|easy|secure|scalable|reliable|efficient|powerful|flexible),\\s+(?:fast|simple|easy|secure|scalable|reliable|efficient|powerful|flexible),?\\s+and\\s+(?:fast|simple|easy|secure|scalable|reliable|efficient|powerful|flexible)|(?:streamline|simplify|boost|drive|improve|enhance|increase|reduce)\\s+[A-Za-z]+(?:\\s+[A-Za-z]+){0,3},\\s+(?:streamline|simplify|boost|drive|improve|enhance|increase|reduce)\\s+[A-Za-z]+(?:\\s+[A-Za-z]+){0,3},?\\s+and\\s+(?:streamline|simplify|boost|drive|improve|enhance|increase|reduce)\\s+[A-Za-z]+(?:\\s+[A-Za-z]+){0,3})\\b"
+weight = 0.5
+rationale = "owner voice avoids three-part promotional cadence, factual inventories are left alone"
+
+[[rules]]
+id = "G010"
+name = "contrast-framing"
+kind = "regex"
+pattern = "(?i)\\b(?:not|\\w+n['\\x{2019}]t)\\s+(?:(?:just|only|merely)\\s+)?[^,.!?\\n]{1,80}(?:,?\\s+but\\s+|,\\s+it(?:['\\x{2019}]s| is)?\\s+)\\w+"
+weight = 0.6
+rationale = "owner voice avoids contrast templates, state the positive claim directly"
+
+[[rules]]
+id = "G011"
+name = "rhetorical-filler-question"
+kind = "regex"
+pattern = "(?i)\\b(?:why (?:does (?:this|that|it) matter|is (?:this|that|it) important)|what does (?:this|that|it) mean)\\s*\\?"
+weight = 0.6
+rationale = "owner voice avoids stock rhetorical filler questions, state the point directly"
