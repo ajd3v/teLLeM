@@ -45,6 +45,15 @@ impl Engine {
             }
         }
 
+        for (ri, shape) in &self.shape_rules {
+            let rule = &self.rules[*ri];
+            for (start, end) in shape.find(text, &masked) {
+                if !skip_by_preceding(rule, text, start) {
+                    findings.push(self.finding(rule, text, start, end));
+                }
+            }
+        }
+
         self.structural(text, &masked, &mut findings);
         findings.sort_by_key(|f| (f.start, f.end));
 
@@ -85,7 +94,7 @@ impl Engine {
         }
     }
 
-    /// S-rules live in code: they need document-level stats, not patterns.
+    /// Built-in document statistics supplement the pack-selected shape rules.
     /// fix never touches them, they surface via --suggest (SPEC component 2).
     fn structural(&self, text: &str, masked: &[(usize, usize)], findings: &mut Vec<Finding>) {
         // S001 uniform bullet openers

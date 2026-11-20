@@ -141,7 +141,7 @@ fn add_matches(text: &str, mut masked: Vec<(usize, usize)>, re: &Regex) -> Vec<(
     merge(masked)
 }
 
-fn merge(mut m: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
+pub(crate) fn merge(mut m: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
     m.sort_unstable();
     let mut merged: Vec<(usize, usize)> = Vec::new();
     for (s, e) in m {

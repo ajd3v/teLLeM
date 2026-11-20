@@ -1112,3 +1112,116 @@ kind = "phrase"
 patterns = ["level up", "levels up", "leveled up", "levelled up", "leveling up", "levelling up"]
 weight = 0.3
 rationale = "level up claims progress without stating the improvement"
+
+# PR #14 supplies guarded sentence shapes. All are flag-only.
+[[rules]]
+id = "S004"
+name = "relabel-pairing"
+kind = "shape"
+shape = "relabel-pairing"
+weight = 0.5
+rationale = "adjacent short sentences relabel one thing for two audiences instead of explaining the difference"
+
+[[rules]]
+id = "S005"
+name = "ordinal-drumbeat"
+kind = "shape"
+shape = "ordinal-drumbeat"
+weight = 0.4
+rationale = "a count followed by a nounless ordinal turns enumeration into a rhetorical beat"
+
+[[rules]]
+id = "S006"
+name = "noun-chiasmus"
+kind = "shape"
+shape = "noun-chiasmus"
+weight = 0.5
+rationale = "repeating an indefinite head noun around a copula can restate the premise as its conclusion"
+
+[[rules]]
+id = "P069"
+name = "stock-signoff"
+kind = "regex"
+pattern = '''(?i)\b(?:let me know if you have (?:any )?(?:other )?questions|hope that helps)\b'''
+weight = 0.4
+rationale = "stock sign-offs repeat an invitation or reassurance after the answer is complete"
+
+[[rules]]
+id = "P070"
+name = "happy-to"
+kind = "regex"
+pattern = '''(?i)\bi(?:['\x{2019}]d| would) be happy to\b'''
+weight = 0.4
+rationale = "a stock offer of happiness adds ceremony before the action"
+
+[[rules]]
+id = "P071"
+name = "performed-delight"
+kind = "regex"
+pattern = '''(?i)\b(?:thanks so much for|really glad you(?:['\x{2019}]re| are)|glad that landed well)\b'''
+weight = 0.4
+rationale = "stock delight reacts to the reader before answering the message"
+
+[[rules]]
+id = "P072"
+name = "labelled-honest-note"
+kind = "regex"
+pattern = '''(?i)\bone honest note(?: on [a-z]+(?:[ -][a-z]+){0,4})?:'''
+weight = 0.4
+rationale = "labelling a note as honest asks for trust before giving the information"
+
+[[rules]]
+id = "P073"
+name = "messaging-narration"
+kind = "regex"
+pattern = '''(?i)\bi (?:just )?wanted to (?:reach out|follow up)\b'''
+weight = 0.4
+rationale = "narrating the decision to send a message delays its purpose"
+
+[[rules]]
+id = "P074"
+name = "canned-reassurance"
+kind = "regex"
+pattern = '''(?i)\b(?:thank you for your patience|rest assured)\b'''
+weight = 0.4
+rationale = "stock reassurance substitutes a service formula for a concrete update"
+
+[[rules]]
+id = "P075"
+name = "caveat-preface"
+kind = "regex"
+pattern = '''(?i)\b(?:just so you know|i should mention)\b'''
+weight = 0.4
+rationale = "a stock caveat preface delays the fact the reader needs"
+
+[[rules]]
+id = "P076"
+name = "conditional-suggestion"
+kind = "regex"
+pattern = '''(?i)\bi would suggest\b'''
+weight = 0.4
+rationale = "conditional suggestion wording distances the writer from their advice"
+
+[[rules]]
+id = "P077"
+name = "balanced-reason"
+kind = "regex"
+pattern = '''(?i)\bnot because [^.!?\r\n|>]{1,100}?\bbut because\b'''
+weight = 0.4
+rationale = "balanced because clauses stage a contrast before giving the reason"
+
+[[rules]]
+id = "P078"
+name = "corrective-source-framing"
+kind = "regex"
+pattern = '''(?i)\bshould be (?:treated|read|understood|seen) as [^.!?\r\n|>]{1,120}?\brather than(?: as)?[ \t]+[a-z]+\b'''
+weight = 0.5
+rationale = "a prescribed interpretation followed by rather than stages a corrective warning about the source"
+
+[[rules]]
+id = "P079"
+name = "does-not-establish"
+kind = "regex"
+pattern = '''(?i)\bdoes not establish (?:that|whether|when|where|who|how|the|any)\b'''
+weight = 0.4
+rationale = "does not establish is a recurring caution frame, check whether the limitation needs stating"

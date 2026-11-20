@@ -6,7 +6,10 @@ mod fix;
 mod lint;
 mod mask;
 pub mod mine;
+mod shape;
 pub mod train;
+
+pub use shape::Shape;
 
 use std::collections::HashMap;
 
@@ -30,6 +33,7 @@ pub enum Kind {
     Word,
     Phrase,
     Regex,
+    Shape,
 }
 
 #[derive(Deserialize, Clone)]
@@ -41,6 +45,8 @@ pub struct Rule {
     pub patterns: Vec<String>,
     #[serde(default)]
     pub pattern: Option<String>,
+    #[serde(default)]
+    pub shape: Option<Shape>,
     #[serde(default = "default_weight")]
     pub weight: f32,
     pub rationale: String,
@@ -144,6 +150,7 @@ pub struct Engine {
     pub(crate) ac_rule: Vec<usize>,
     /// lint-time regex rules (rules index, compiled)
     pub(crate) regex_rules: Vec<(usize, Regex)>,
+    pub(crate) shape_rules: Vec<(usize, Shape)>,
     /// fix-time replacements in pack order (compiled, replacement)
     pub(crate) fix_res: Vec<(Regex, String)>,
     /// word form -> (replacement, rules index) for fix
@@ -175,6 +182,7 @@ impl Engine {
         let mut ac_pats: Vec<String> = Vec::new();
         let mut ac_rule: Vec<usize> = Vec::new();
         let mut regex_rules = Vec::new();
+        let mut shape_rules = Vec::new();
         let mut fix_res = Vec::new();
         let mut swaps = HashMap::new();
 
@@ -221,6 +229,15 @@ impl Engine {
                         fix_res.push((Regex::new(pat)?, repl.clone()));
                     }
                 }
+                Kind::Shape => {
+                    if r.replace.is_some() || !r.swaps.is_empty() {
+                        return Err(format!("rule {}: shape rules must be flag-only", r.id).into());
+                    }
+                    let shape = r
+                        .shape
+                        .ok_or_else(|| format!("rule {}: shape kind needs `shape`", r.id))?;
+                    shape_rules.push((i, shape));
+                }
             }
         }
 
@@ -240,6 +257,7 @@ impl Engine {
             ac,
             ac_rule,
             regex_rules,
+            shape_rules,
             fix_res,
             swaps,
             bands,

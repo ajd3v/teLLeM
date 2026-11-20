@@ -207,6 +207,24 @@ Reusable inputs:
  rhetorical filler questions. Single-list detection is limited to
  promotional cadence. General three-item lists remain outside that rule
  because factual inventories produced false positives in the resume.
+- **Sentence shapes and short messages**: supplied copies of SlopMonster
+ [PR #14](https://github.com/ItsssssJack/SlopMonster/pull/14) and
+ [PR #13](https://github.com/ItsssssJack/SlopMonster/pull/13), MIT license.
+ Both were open and unmerged in the handoff. PR #13 proposes documentation,
+ not scorer changes. Its fixed message phrases become flag-only rules here.
+ PR #14 supplies the three scored shapes and their negative examples.
+ `kind = "shape"` selects a `shape` detector in the base pack, with the same
+ receipt fields as lexical rules. Shape rules cannot define replacements.
+ Pairing stops at Markdown boundaries and masked text. This port uses an
+ 18-word ceiling per sentence inside the source's 220-character window.
+ Noun repetition requires two indefinite articles and matching head nouns.
+ The advisory echo and flat-splice shapes are omitted.
+- **Corrective framing**: Wikipedia contributors,
+ ["Signs of AI writing", revision 1386649346](https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1386649346),
+ CC BY-SA 4.0. The supplied mid-2026 section describes prescribed readings
+ followed by `rather than`, `does not establish`, and `should not be confused
+ with`. Patterns here are independently implemented from those descriptions.
+ The last pattern has a lower weight because the source calls it less reliable.
 - **Corpora/eval**: MAGE (27 LLMs, 7 families, 10 domains, best attribution
  training set), M4/M4GT-Bench (multilingual, EACL 2024), locuslab per-model
  response corpora, DetectRL (adversarial). slop-forensics (357 stars, MIT)

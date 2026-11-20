@@ -286,6 +286,7 @@ fn every_rule_can_actually_fire() {
             tellem_core::Kind::Word => r.patterns.is_empty() && r.swaps.is_empty(),
             tellem_core::Kind::Phrase => r.patterns.is_empty(),
             tellem_core::Kind::Regex => r.pattern.is_none(),
+            tellem_core::Kind::Shape => r.shape.is_none(),
         })
         .map(|r| r.id.as_str())
         .collect();
